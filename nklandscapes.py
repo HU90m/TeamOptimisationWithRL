@@ -1,7 +1,7 @@
 '''Modules for generating NK Landscapes.'''
 
-import numpy as np
 import multiprocessing as mp
+import numpy as np
 
 from bitmanipulation import get_bit, set_bit
 
@@ -76,9 +76,8 @@ def generate_fitness_func(
     for each of the 2^N possible solutions
     '''
     if num_bits < num_components +1:
-        raise ValueError(
-                'The following must be true: num_bits >= num_components +1'
-        )
+        raise ValueError('The following must be true:'
+                         ' num_bits >= num_components +1')
 
     num_solutions = 1<<num_bits
 
@@ -140,7 +139,6 @@ def generate_fitness_func(
 
 
 if __name__ == '__main__':
-
     from time import time
 
     N, K = 10, 5
