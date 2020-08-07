@@ -1,5 +1,7 @@
 '''Modules for generating NK Landscapes.'''
 
+from multiprocessing import sharedctypes
+
 import multiprocessing as mp
 import numpy as np
 
@@ -88,14 +90,27 @@ def generate_fitness_func(
     component_fitness_funcs = np.random.rand(num_bits, 1<<(num_components+1))
 
 
-    # finds the fitness_func
-    # the output of each of the fitness function
-    # for each of the 2^N solutions
-    fitness_func = np.empty(num_solutions)
+    if num_processes < 2:
+        # the output of each of the fitness function
+        # for each of the 2^N solutions
+        fitness_func = np.empty(num_solutions)
 
-    if num_processes > 1:
-        # setting up shared memory
-        fitness_func_shared = mp.Array('d', fitness_func)
+        find_solution_fitnesses(
+            num_bits,
+            interaction_lists,
+            component_fitness_funcs,
+            0,
+            num_solutions,
+            fitness_func,
+        )
+
+    else:
+        # create a shared memory location
+        fitness_func_shared = \
+                sharedctypes.RawArray('d', num_solutions)
+
+        # abstract this shared location to a numpy array
+        fitness_func = np.frombuffer(fitness_func_shared)
 
         processes = []
         for process_idx in range(num_processes):
@@ -107,7 +122,7 @@ def generate_fitness_func(
                 component_fitness_funcs,
                 start,
                 end,
-                fitness_func_shared,
+                fitness_func,
             ))
             process.start()
             processes.append(process)
@@ -115,19 +130,6 @@ def generate_fitness_func(
         for process in processes:
             process.join()
 
-        fitness_func = np.array(fitness_func_shared)
-
-    else:
-        fitness_func = np.empty(num_solutions)
-
-        find_solution_fitnesses(
-            num_bits,
-            interaction_lists,
-            component_fitness_funcs,
-            0,
-            num_solutions,
-            fitness_func,
-        )
 
     # The normalised fitness function for each of the 2^N possible solutions
     fitness_func_norm = fitness_func/max(fitness_func)
@@ -141,7 +143,7 @@ def generate_fitness_func(
 if __name__ == '__main__':
     from time import time
 
-    N, K = 10, 5
+    N, K = 15, 5
 
     np.random.seed(42)
     t0 = time()
