@@ -13,8 +13,8 @@ from numpy import random
 import bitmanipulation as bitm
 import nklandscapes as nkl
 
-
 #import matplotlib.pyplot as plt
+
 
 ###############################################################################
 # Constants
@@ -126,6 +126,7 @@ class SimulationRecord():
                 positions=self.positions,
                 fitnesses=self.fitnesses,
                 actions=self.actions,
+                outcomes=self.outcomes,
             )
 
     def load(self, file_name):
@@ -133,11 +134,12 @@ class SimulationRecord():
         with open(file_name, 'rb') as file_handle:
             file_content = np.load(file_handle)
 
-        self.num_nodes = int(file_content['num_nodes'])
-        self.deadline = int(file_content['deadline'])
-        self.positions = file_content['positions']
-        self.fitnesses = file_content['fitnesses']
-        self.actions = file_content['actions']
+            self.num_nodes = int(file_content['num_nodes'])
+            self.deadline = int(file_content['deadline'])
+            self.positions = file_content['positions']
+            self.fitnesses = file_content['fitnesses']
+            self.actions = file_content['actions']
+            self.outcomes = file_content['outcomes']
 
 
 ###############################################################################
@@ -335,6 +337,7 @@ class QLearningAgent():
                 ACTION_NUM['modal_then_step'],
             ),
     ):
+        # learning variables
         self.deadline = deadline
         self.learning_rate = learning_rate
         self.discount = discount_factor
@@ -342,11 +345,13 @@ class QLearningAgent():
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
 
+        # set up actions
         self.possible_actions = possible_actions
         self.action2idx = {}
         for action_idx, possible_action in enumerate(possible_actions):
             self.action2idx[possible_action] = action_idx
 
+        # set up states
         self.quantisation_levels = quantisation_levels
 
         self.state_dimensions = [deadline, quantisation_levels+1]
@@ -359,25 +364,7 @@ class QLearningAgent():
             size=(list(self.state_dimensions) + [len(possible_actions)]),
         )
 
-    def _update_q_table(self, state, action, next_state, reward):
-        """Updates the Q table after an action has been taken."""
-        next_best_action = np.argmax(self.q_table[next_state])
-        td_target = reward \
-            + self.discount * self.q_table[next_state][next_best_action]
-
-        action_idx = self.action2idx[action]
-        td_delta = td_target - self.q_table[state][action_idx]
-
-        self.q_table[state][action_idx] += self.learning_rate * td_delta
-
-    def _find_state(
-            self,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-    ):
+    def _find_state(self, time, node, neighbours, fitness_func, sim_record):
         """Find a node's state at the given time."""
         current_fitness = fitness_func[sim_record.positions[node, time]]
         state = [
@@ -393,7 +380,24 @@ class QLearningAgent():
             ]
         return tuple(state)
 
-    def _choose_action(self, current_state):
+    def _update_q_table(self, state, action, next_state, reward):
+        """Updates the Q table after an action has been taken."""
+        next_best_action = np.argmax(self.q_table[next_state])
+        td_target = reward \
+            + self.discount * self.q_table[next_state][next_best_action]
+
+        action_idx = self.action2idx[action]
+        td_delta = td_target - self.q_table[state][action_idx]
+
+        self.q_table[state][action_idx] += self.learning_rate * td_delta
+
+    def _choose_best_action(self, current_state):
+        """
+        Chooses the best action according the Q table.
+        """
+        return self.possible_actions[np.argmax(self.q_table[current_state])]
+
+    def _greedy_epsilon_choose_action(self, current_state):
         """
         Chooses either the best action according the Q table
         or a random action
@@ -408,17 +412,7 @@ class QLearningAgent():
         self.epsilon -= self.epsilon_decay * self.epsilon
         return action
 
-    def save_q_table(self, file_name):
-        """Save the q_table with the given file name."""
-        with open(file_name, 'wb') as file_handle:
-            np.save(file_handle, self.q_table)
-
-    def load_q_table(self, file_name):
-        """Load a q_table with the given file name."""
-        with open(file_name, 'rb') as file_handle:
-            self.q_table = np.load(file_handle)
-
-    def learn_and_perform_action(
+    def _perform_action(
             self,
             num_bits,
             time,
@@ -426,37 +420,9 @@ class QLearningAgent():
             neighbours,
             fitness_func,
             sim_record,
+            action,
     ):
-        """Function run at each time step of an episode."""
-        # find current state
-        current_state = self._find_state(
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
-
-        # if not first run learn from the last decision
-        if time > 1:
-            last_state = self._find_state(
-                time-1,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
-            )
-            self._update_q_table(
-                last_state,
-                sim_record.actions[node, time-1],
-                current_state,
-                fitness_func[sim_record.positions[node, time]],
-            )
-
-        # decide on next action
-        action = self._choose_action(current_state)
-
-        # carry out action
+        """Calls the action function corresponding to the given action."""
         if action == ACTION_NUM['best_then_step']:
             action_best_then_step(
                 num_bits,
@@ -484,6 +450,87 @@ class QLearningAgent():
                 fitness_func,
                 sim_record,
             )
+
+    def save_q_table(self, file_name):
+        """Save the q_table with the given file name."""
+        with open(file_name, 'wb') as file_handle:
+            np.save(file_handle, self.q_table)
+
+    def load_q_table(self, file_name):
+        """Load a q_table with the given file name."""
+        with open(file_name, 'rb') as file_handle:
+            self.q_table = np.load(file_handle)
+
+    def perform_best_action(
+            self,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+    ):
+        """Performs the learned best action for a given state."""
+        # find current state
+        current_state = self._find_state(
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
+
+        # decide on next action
+        action = self._choose_best_action(current_state)
+
+        # perform action
+        self._perform_action(num_bits, time, node, neighbours,
+                             fitness_func, sim_record, action)
+
+    def learn_and_perform_greedy_epsilon_action(
+            self,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+    ):
+        """
+        Learns from the previous time step
+        and performs the greedy epsilon action for a given state.
+        """
+        # find current state
+        current_state = self._find_state(
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
+
+        # if not first run learn from the last decision
+        if time > 1:
+            last_state = self._find_state(
+                time-1,
+                node,
+                neighbours,
+                fitness_func,
+                sim_record,
+            )
+            self._update_q_table(
+                last_state,
+                sim_record.actions[node, time-1],
+                current_state,
+                fitness_func[sim_record.positions[node, time]],
+            )
+
+        # decide on next action
+        action = self._greedy_epsilon_choose_action(current_state)
+
+        # perform action
+        self._perform_action(num_bits, time, node, neighbours,
+                             fitness_func, sim_record, action)
 
 
 ###############################################################################
@@ -610,10 +657,11 @@ if __name__ == '__main__':
         DEADLINE,
         epsilon_decay=1e-6,
         quantisation_levels=50,
+        use_best_neighbour=False,
     )
 
     print(f'epsilon = {smart_agent.epsilon}', end='')
-    while smart_agent.epsilon > 0.05:
+    while smart_agent.epsilon > 0.50:
         fitness_func = nkl.generate_fitness_func(N, K, num_processes=4)
 
         run_episode(
@@ -621,11 +669,9 @@ if __name__ == '__main__':
             N,
             DEADLINE,
             fitness_func,
-            strategy=smart_agent.learn_and_perform_action,
+            strategy=smart_agent.learn_and_perform_greedy_epsilon_action,
         )
         print(f'\repsilon = {smart_agent.epsilon}', end='')
-
-    print()
 
 
     out_q = []
@@ -641,7 +687,7 @@ if __name__ == '__main__':
             N,
             DEADLINE,
             fitness_func,
-            strategy=smart_agent.learn_and_perform_action,
+            strategy=smart_agent.perform_best_action,
         ).fitnesses
         out_q.append(np.mean(fitnesses[:, DEADLINE-1]))
 
