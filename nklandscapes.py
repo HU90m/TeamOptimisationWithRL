@@ -110,7 +110,7 @@ def generate_fitness_func(
                 sharedctypes.RawArray('d', num_solutions)
 
         # abstract this shared location to a numpy array
-        fitness_func = np.frombuffer(fitness_func_shared)
+        fitness_func = np.frombuffer(fitness_func_shared, dtype='d')
 
         processes = []
         for process_idx in range(num_processes):
