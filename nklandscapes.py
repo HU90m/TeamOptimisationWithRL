@@ -1,4 +1,4 @@
-'''Modules for generating NK Landscapes.'''
+"""A modules for generating NK Landscapes."""
 
 from multiprocessing import sharedctypes
 
@@ -9,7 +9,7 @@ from bitmanipulation import get_bit, set_bit
 
 
 def generate_interaction_lists(num_bits, num_components):
-    '''For each index, a list of K other random indices are generated.'''
+    """For each index, a list of K other random indices are generated."""
     interaction_lists = np.empty((num_bits, num_components+1), dtype=int)
 
     for idx in range(num_bits):
@@ -35,10 +35,10 @@ def find_solution_fitnesses(
         # output
         fitness_func,
 ):
-    '''
+    """
     Finds the output of the fitness function,
     in the range of solutions from start_solution to end_solution.
-    '''
+    """
     # for each possible solution
     for solution in range(start_solution, end_solution):
 
@@ -73,10 +73,10 @@ def generate_fitness_func(
         fitness_8=True,
         num_processes=1,
 ):
-    '''
+    """
     Returns a list of the fitness function's output
     for each of the 2^N possible solutions
-    '''
+    """
     if num_bits < num_components +1:
         raise ValueError('The following must be true:'
                          ' num_bits >= num_components +1')
