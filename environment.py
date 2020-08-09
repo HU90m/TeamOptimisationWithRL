@@ -1,4 +1,4 @@
-"""Script for exploring collaborative problem solving strategies."""
+"""A module for simulation a collaborative problem solving environment."""
 
 ###############################################################################
 # Imports
@@ -7,13 +7,10 @@
 import multiprocessing as mp
 from multiprocessing import sharedctypes
 from collections import Counter
-import networkx as nx
 import numpy as np
 from numpy import random
 import bitmanipulation as bitm
-import nklandscapes as nkl
 
-#import matplotlib.pyplot as plt
 
 
 ###############################################################################
@@ -28,6 +25,7 @@ ACTION_STR = [
         'best',
         'modal',
         'best_then_step',
+        'step_then_best',
         'modal_then_step',
 ]
 ACTION_NUM = {
@@ -36,7 +34,7 @@ ACTION_NUM = {
         'best' : 2,
         'modal' : 3,
         'best_then_step' : 4,
-        'step_then_best' : 4,
+        'step_then_best' : 5,
         'modal_then_step' : 6,
 }
 
@@ -74,10 +72,10 @@ class SimulationRecord():
         self.deadline = deadline
 
         if num_processes < 2:
-            self.positions = np.empty((num_nodes, deadline), dtype=int)
+            self.positions = np.empty((num_nodes, deadline), dtype='I')
             self.fitnesses = np.empty((num_nodes, deadline))
-            self.actions = np.empty((num_nodes, deadline), dtype=int)
-            self.outcomes = np.empty((num_nodes, deadline), dtype=int)
+            self.actions = np.empty((num_nodes, deadline), dtype='I')
+            self.outcomes = np.empty((num_nodes, deadline), dtype='I')
 
         else:
             # make shared memory
@@ -140,6 +138,46 @@ class SimulationRecord():
             self.fitnesses = file_content['fitnesses']
             self.actions = file_content['actions']
             self.outcomes = file_content['outcomes']
+
+    def draw_outcomes_stack_plot(self, axis):
+        """
+        Plots a stack plot of the proportion of different outcomes over time.
+        """
+        outcome_frequencies = {}
+        for outcome_name in OUTCOME_NUM:
+            outcome_frequencies[outcome_name] = \
+                    np.zeros(self.deadline, dtype='I')
+
+        for time in range(self.deadline):
+            for node in range(self.num_nodes):
+                outcome_str = OUTCOME_STR[self.outcomes[node, time]]
+                outcome_frequencies[outcome_str][time] += 1
+
+        axis.stackplot(
+            range(self.deadline),
+            outcome_frequencies.values(),
+            labels=outcome_frequencies.keys(),
+        )
+
+    def draw_actions_stack_plot(self, axis):
+        """
+        Plots a stack plot of the proportion of different actions over time.
+        """
+        action_frequencies = {}
+        for action_name in ACTION_NUM:
+            action_frequencies[action_name] = \
+                    np.zeros(self.deadline, dtype='I')
+
+        for time in range(self.deadline):
+            for node in range(self.num_nodes):
+                action_str = ACTION_STR[self.actions[node, time]]
+                action_frequencies[action_str][time] += 1
+
+        axis.stackplot(
+            range(self.deadline),
+            action_frequencies.values(),
+            labels=action_frequencies.keys(),
+        )
 
 
 ###############################################################################
@@ -326,7 +364,7 @@ class QLearningAgent():
             discount_factor=0.1,
 
             epsilon=1,
-            epsilon_decay=0.10,
+            epsilon_decay=1e-6,
 
             quantisation_levels=100,
             use_best_neighbour=False,
@@ -625,119 +663,3 @@ def run_episode(
                 process.join()
 
     return sim_record
-
-
-###############################################################################
-# Main
-###############################################################################
-#
-if __name__ == '__main__':
-    np.random.seed(42)
-    N, K = 13, 6
-
-    NUM_NODES = 60
-    DEGREE = 4
-
-    DEADLINE = 50
-    ITERATIONS = 30
-
-    SAMPLE = 5
-
-    # Fully connected graph
-    print('generating graph')
-    graph = nx.complete_graph(NUM_NODES)
-    #graph = nx.random_regular_graph(DEGREE, NUM_NODES)
-
-    #nx.draw_circular(graph)
-    #plt.show()
-
-
-    # make and train agent
-    smart_agent = QLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-6,
-        quantisation_levels=50,
-        use_best_neighbour=False,
-    )
-
-    print(f'epsilon = {smart_agent.epsilon}', end='')
-    while smart_agent.epsilon > 0.50:
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=4)
-
-        run_episode(
-            graph,
-            N,
-            DEADLINE,
-            fitness_func,
-            strategy=smart_agent.learn_and_perform_greedy_epsilon_action,
-        )
-        print(f'\repsilon = {smart_agent.epsilon}', end='')
-
-
-    out_q = []
-    out_bts = []
-    out_stb = []
-    out_mts = []
-
-    for iteration in range(ITERATIONS):
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=4)
-
-        fitnesses = run_episode(
-            graph,
-            N,
-            DEADLINE,
-            fitness_func,
-            strategy=smart_agent.perform_best_action,
-        ).fitnesses
-        out_q.append(np.mean(fitnesses[:, DEADLINE-1]))
-
-        fitnesses = run_episode(
-            graph,
-            N,
-            DEADLINE,
-            fitness_func,
-            neighbour_sample_size=SAMPLE,
-            strategy=action_best_then_step,
-        ).fitnesses
-        out_bts.append(np.mean(fitnesses[:, DEADLINE-1]))
-
-        fitnesses = run_episode(
-            graph,
-            N,
-            DEADLINE,
-            fitness_func,
-            neighbour_sample_size=SAMPLE,
-            strategy=action_step_then_best,
-        ).fitnesses
-        out_stb.append(np.mean(fitnesses[:, DEADLINE-1]))
-
-        fitnesses = run_episode(
-            graph,
-            N,
-            DEADLINE,
-            fitness_func,
-            neighbour_sample_size=SAMPLE,
-            strategy=action_modal_then_step,
-        ).fitnesses
-        out_mts.append(np.mean(fitnesses[:, DEADLINE-1]))
-
-        print(f'iteration: {iteration}')
-        print()
-
-        print(f'Q Learning Score: {out_q[iteration]}')
-        print(f'Best Then Search Score: {out_bts[iteration]}')
-        print(f'Search Then Best Score: {out_stb[iteration]}')
-        print(f'Modal Then Search Score: {out_mts[iteration]}')
-        print()
-
-        print(f'Q Learning Average Score: {np.mean(out_q)}')
-        print(f'Best Then Search Average Score: {np.mean(out_bts)}')
-        print(f'Search Then Best Average Score: {np.mean(out_stb)}')
-        print(f'Modal Then Search Average Score: {np.mean(out_mts)}')
-        print()
-
-        print(f'Q Learning Score Variance: {np.var(out_q)}')
-        print(f'Best Then Search Score Variance: {np.var(out_bts)}')
-        print(f'Search Then Best Score Variance: {np.var(out_stb)}')
-        print(f'Modal Then Search Score Variance: {np.var(out_mts)}')
-        print()
