@@ -450,9 +450,9 @@ class QLearningAgent():
             if state_component == 'time':
                 self.state_dimensions += [deadline]
             elif state_component == 'score':
-                self.state_dimensions += [quantisation_levels+1]
+                self.state_dimensions += [quantisation_levels]
             elif state_component == 'best neighbour score':
-                self.state_dimensions += [quantisation_levels+1]
+                self.state_dimensions += [quantisation_levels]
 
         # generate q table
         self.q_table = random.uniform(
@@ -469,7 +469,7 @@ class QLearningAgent():
                 current_fitness = \
                         fitness_func[sim_record.positions[node, time]]
                 state += [
-                    int(round(current_fitness * self.quantisation_levels))
+                    int(round(current_fitness * (self.quantisation_levels -1)))
                 ]
             elif state_component == 'best neighbour score':
                 best_neighbour_fitness = fitness_func[
@@ -477,7 +477,7 @@ class QLearningAgent():
                                         fitness_func, neighbours)
                 ]
                 state += [int(round(
-                    best_neighbour_fitness * self.quantisation_levels,
+                    best_neighbour_fitness * (self.quantisation_levels -1),
                 ))]
         return tuple(state)
 
@@ -667,9 +667,7 @@ class QLearningAgent():
             )
             cumulative_values = cumulative_values + actions_comp[idx]
 
-        axis.title(state_component_name)
-
-
+        axis.set_title(state_component_name)
 
 
 ###############################################################################
