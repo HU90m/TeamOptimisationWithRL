@@ -1,89 +1,86 @@
-"""A script for training a Q Agent."""
+"""A script for training a Q Learning Agent."""
 
+import sys
+import json
+from time import time
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
-from time import time
 
 import nklandscapes as nkl
 import environment as env
 
 
 def file_write(name, line):
+    """Write the given line to the file with the given name."""
     file_handle = open(name, 'w')
     file_handle.write(line)
     file_handle.close()
 
+
 def file_append(name, line):
+    """Appends the given line to the file with the given name."""
     file_handle = open(name, 'a')
     file_handle.write(line)
     file_handle.close()
 
 
+def get_config():
+    """Loads the config file given in the arguments."""
+    if len(sys.argv) < 2:
+        print(
+            'Please provide a config json file.\n'
+        )
+        sys.exit(0)
+
+    with open(sys.argv[1], 'rb') as file_handle:
+        return json.load(file_handle)
+
+
 if __name__ == '__main__':
-    np.random.seed(42)
-    N, K = 12, 5
+    config = get_config()
 
-    NUM_NODES = 60
-    DEGREE = 4
+    np.random.seed(config["seed"])
 
-    DEADLINE = 50
-    ITERATIONS = 3
-
-
-    # Fully connected graph
-    print('generating graph')
-    graph = nx.complete_graph(NUM_NODES)
-    #graph = nx.random_regular_graph(DEGREE, NUM_NODES)
-
-    #nx.draw_circular(graph)
-    #plt.show()
+    if config["graph"]["type"] == "random regular":
+        graph = nx.random_regular_graph(config["graph"]["degree"],
+                                        config["graph"]["num_nodes"])
+    else:
+        graph = nx.complete_graph(config["graph"]["num_nodes"])
 
 
     # make and train agent
     smart_agent = env.QLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-7,
-        quantisation_levels=50,
-        use_best_neighbour=False,
+        config["deadline"],
+        epsilon_decay=config["agent"]["epsilon decay"],
+        quantisation_levels=config["agent"]["quantisation levels"],
     )
+    if config["agent"]["load table"]:
+        smart_agent.load_q_table(config["agent"]["load table"])
 
+
+    name = config['name']
+    output_file = f"{name}.txt"
+    table_file = f"{name}.np"
+
+    COUNT = 0
     t0 = time()
-    count = 0
-
-    smart_agent.load_q_table('run1.np')
-
-    while time() - t0 < 1800:
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=3)
-
+    while time() - t0 < config["training time"]:
+        fitness_func = nkl.generate_fitness_func(config["nk landscape"]["N"],
+                                                 config["nk landscape"]["K"])
         env.run_episode(
             graph,
-            N,
-            DEADLINE,
+            config["nk landscape"]["N"],
+            config["deadline"],
             fitness_func,
             strategy=smart_agent.learn_and_perform_greedy_epsilon_action,
         )
-
-        if not count % 100:
+        if not COUNT % 100:
             mins_passed = (time() -t0)/60
-            file_write('run2.txt', f'count, time = {count}, {mins_passed} minutes\n')
-        count += 1
+            file_write(output_file,
+                       f'count = {COUNT}\n'
+                       f'time = {mins_passed} minutes\n'
+                       f'epsilon = {smart_agent.epsilon}\n')
+            smart_agent.save_q_table(table_file)
+        COUNT += 1
 
-
-    smart_agent.save_q_table('run2.np')
-
-    fitness_func = nkl.generate_fitness_func(N, K, num_processes=3)
-    sim_record = env.run_episode(
-        graph,
-        N,
-        DEADLINE,
-        fitness_func,
-        strategy=smart_agent.perform_best_action,
-    )
-
-    final_score = np.mean(sim_record.fitnesses[:, DEADLINE-1])
-    file_append('run1.txt', f'final epsilon = {smart_agent.epsilon}\n')
-    file_append('run1.txt', f'final score = {final_score}\n')
-
-    sim_record.draw_actions_stack_plot(plt)
-    plt.show()
+    file_append(output_file, f'final epsilon = {smart_agent.epsilon}\n')
