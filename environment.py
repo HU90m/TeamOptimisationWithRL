@@ -56,6 +56,7 @@ OUTCOME_NUM = {
         'copied a modal' : 4,
 }
 
+
 ###############################################################################
 # Types
 ###############################################################################
@@ -159,6 +160,30 @@ class SimulationRecord():
             labels=outcome_frequencies.keys(),
         )
 
+    def draw_outcomes_bar_plot(self, axis):
+        """
+        Plots a bar plot of the proportion of different outcomes over time.
+        """
+        outcome_frequencies = {}
+        for outcome_name in OUTCOME_NUM:
+            outcome_frequencies[outcome_name] = \
+                    np.zeros(self.deadline, dtype='I')
+
+        for time in range(self.deadline):
+            for node in range(self.num_nodes):
+                outcome_str = OUTCOME_STR[self.outcomes[node, time]]
+                outcome_frequencies[outcome_str][time] += 1
+
+        cumulative_values = np.zeros(self.deadline)
+        for label, values in outcome_frequencies.items():
+            axis.bar(
+                range(self.deadline),
+                values,
+                bottom=cumulative_values,
+                label=label,
+            )
+            cumulative_values = cumulative_values + values
+
     def draw_actions_stack_plot(self, axis):
         """
         Plots a stack plot of the proportion of different actions over time.
@@ -178,6 +203,30 @@ class SimulationRecord():
             action_frequencies.values(),
             labels=action_frequencies.keys(),
         )
+
+    def draw_actions_bar_plot(self, axis):
+        """
+        Plots a bar plot of the proportion of different actions over time.
+        """
+        action_frequencies = {}
+        for action_name in ACTION_NUM:
+            action_frequencies[action_name] = \
+                    np.zeros(self.deadline, dtype='I')
+
+        for time in range(self.deadline):
+            for node in range(self.num_nodes):
+                action_str = ACTION_STR[self.actions[node, time]]
+                action_frequencies[action_str][time] += 1
+
+        cumulative_values = np.zeros(self.deadline)
+        for label, values in action_frequencies.items():
+            axis.bar(
+                range(self.deadline),
+                values,
+                bottom=cumulative_values,
+                label=label,
+            )
+            cumulative_values = cumulative_values + values
 
 
 ###############################################################################
