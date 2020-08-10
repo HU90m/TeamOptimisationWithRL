@@ -416,7 +416,11 @@ class QLearningAgent():
             epsilon_decay=1e-6,
 
             quantisation_levels=100,
-            use_best_neighbour=False,
+            state_components=(
+                'time',
+                'score',
+                #'best_neighbour',
+            ),
 
             possible_actions=(
                 ACTION_NUM['best_then_step'],
@@ -440,31 +444,41 @@ class QLearningAgent():
 
         # set up states
         self.quantisation_levels = quantisation_levels
+        self.state_components = state_components
+        self.state_dimensions = []
+        for state_component in self.state_components:
+            if state_component == 'time':
+                self.state_dimensions += [deadline]
+            elif state_component == 'score':
+                self.state_dimensions += [quantisation_levels+1]
+            elif state_component == 'best neighbour score':
+                self.state_dimensions += [quantisation_levels+1]
 
-        self.state_dimensions = [deadline, quantisation_levels+1]
-
-        self.use_best_neighbour = use_best_neighbour
-        if use_best_neighbour:
-            self.state_dimensions += [quantisation_levels+1]
-
+        # generate q table
         self.q_table = random.uniform(
             size=(list(self.state_dimensions) + [len(possible_actions)]),
         )
 
     def _find_state(self, time, node, neighbours, fitness_func, sim_record):
         """Find a node's state at the given time."""
-        current_fitness = fitness_func[sim_record.positions[node, time]]
-        state = [
-            self.deadline - time -1,
-            int(round(current_fitness * self.quantisation_levels)),
-        ]
-        if self.use_best_neighbour:
-            best_neighbour_fitness = fitness_func[
-                find_best_neighbour(time, sim_record, fitness_func, neighbours)
-            ]
-            state += [
-                int(round(best_neighbour_fitness * self.quantisation_levels))
-            ]
+        state = []
+        for state_component in self.state_components:
+            if state_component == 'time':
+                state += [self.deadline - time -1]
+            elif state_component == 'score':
+                current_fitness = \
+                        fitness_func[sim_record.positions[node, time]]
+                state += [
+                    int(round(current_fitness * self.quantisation_levels))
+                ]
+            elif state_component == 'best neighbour score':
+                best_neighbour_fitness = fitness_func[
+                    find_best_neighbour(time, sim_record,
+                                        fitness_func, neighbours)
+                ]
+                state += [int(round(
+                    best_neighbour_fitness * self.quantisation_levels,
+                ))]
         return tuple(state)
 
     def _update_q_table(self, state, action, next_state, reward):
@@ -605,11 +619,14 @@ class QLearningAgent():
                 fitness_func,
                 sim_record,
             )
+            reward = fitness_func[sim_record.positions[node, time]] \
+                    - fitness_func[sim_record.positions[node, time -1]]
+
             self._update_q_table(
                 last_state,
                 sim_record.actions[node, time-1],
                 current_state,
-                fitness_func[sim_record.positions[node, time]],
+                reward,
             )
 
         # decide on next action
@@ -618,6 +635,41 @@ class QLearningAgent():
         # perform action
         self._perform_action(num_bits, time, node, neighbours,
                              fitness_func, sim_record, action)
+
+    def plot_q_table(self, axis, state_component_name, normalise=True):
+        """
+        Plots the perceived utility of the actions
+        for the all values of a state component.
+        """
+
+        comp_idx = self.state_components.index(state_component_name)
+        comp_q_table = np.swapaxes(self.q_table, 0, comp_idx)
+
+        comp_actions = np.sum(
+            comp_q_table,
+            axis=tuple(range(1, len(self.state_dimensions))),
+            dtype='d',
+        )
+        if normalise:
+            for idx, _ in enumerate(comp_actions):
+                comp_actions[idx] = \
+                        comp_actions[idx] /np.sum(comp_actions[idx])
+
+        actions_comp = np.swapaxes(comp_actions, 0, 1)
+
+        cumulative_values = np.zeros(self.state_dimensions[comp_idx])
+        for idx, action_idx in enumerate(self.possible_actions):
+            axis.bar(
+                range(self.state_dimensions[comp_idx]),
+                actions_comp[idx],
+                bottom=cumulative_values,
+                label=ACTION_STR[action_idx],
+            )
+            cumulative_values = cumulative_values + actions_comp[idx]
+
+        axis.title(state_component_name)
+
+
 
 
 ###############################################################################
