@@ -977,45 +977,9 @@ class QLearningAgent():
 
 
 ###############################################################################
-# Main Functions
+# Main Function
 ###############################################################################
 #
-def run_time_step(
-        num_bits,
-        time,
-        graph,
-        neighbour_sample_size,
-        fitness_func,
-        strategy,
-
-        start_node,
-        end_node,
-
-        sim_record,
-):
-    """Runs the nodes from start_node to end_node, for a time step."""
-    for node in range(start_node, end_node):
-        # Find the node's neighbours
-        neighbours = list(graph.neighbors(node))
-        if neighbour_sample_size is not None:
-            if len(neighbours) > neighbour_sample_size:
-                neighbours = random.choice(
-                    neighbours,
-                    size=neighbour_sample_size,
-                    replace=False,
-                )
-
-        # carry out the strategy
-        strategy(
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
-
-
 def run_episode(
         graph,
         num_bits,
@@ -1033,38 +997,25 @@ def run_episode(
     sim_record.set_random_initial_position(num_bits, fitness_func)
 
     for time in range(deadline -1):
-        if num_processes < 2:
-            run_time_step(
+        for node in range(num_nodes):
+            # Find the node's neighbours
+            neighbours = list(graph.neighbors(node))
+            if neighbour_sample_size is not None:
+                if len(neighbours) > neighbour_sample_size:
+                    neighbours = random.choice(
+                        neighbours,
+                        size=neighbour_sample_size,
+                        replace=False,
+                    )
+
+            # carry out the strategy
+            strategy(
                 num_bits,
                 time,
-                graph,
-                neighbour_sample_size,
+                node,
+                neighbours,
                 fitness_func,
-                strategy,
-                0,
-                num_nodes,
                 sim_record,
             )
-        else:
-            processes = []
-            for process_idx in range(num_processes):
-                start_node = int(num_nodes * process_idx/num_processes)
-                end_node = int(num_nodes * (process_idx+1)/num_processes)
-                process = mp.Process(target=run_time_step, args=(
-                    num_bits,
-                    time,
-                    graph,
-                    neighbour_sample_size,
-                    fitness_func,
-                    strategy,
-                    start_node,
-                    end_node,
-                    sim_record,
-                ))
-                process.start()
-                processes.append(process)
-
-            for process in processes:
-                process.join()
 
     return sim_record
