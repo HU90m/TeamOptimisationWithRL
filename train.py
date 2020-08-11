@@ -49,11 +49,28 @@ if __name__ == '__main__':
 
 
     # make and train agent
-    smart_agent = env.QLearningAgent(
-        config["deadline"],
-        epsilon_decay=config["agent"]["epsilon decay"],
-        quantisation_levels=config["agent"]["quantisation levels"],
-    )
+    if config["agent"]["type"] == "QLearningAgent":
+        smart_agent = env.QLearningAgent(
+            config["deadline"],
+            epsilon_decay=config["agent"]["epsilon decay"],
+            quantisation_levels=config["agent"]["quantisation levels"],
+            state_components=config["agent"]["state components"]
+        )
+        strategy_func = smart_agent.learn_and_perform_epsilon_greedy_action
+
+    elif config["agent"]["type"] == "SimpleQLearningAgent":
+        smart_agent = env.SimpleQLearningAgent(
+            config["deadline"],
+            epsilon_decay=config["agent"]["epsilon decay"]
+        )
+        strategy_func = smart_agent.learn_and_perform_epsilon_greedy_action
+
+    else:
+        smart_agent = env.SimpleMCAgent(
+            config["deadline"],
+        )
+        strategy_func=smart_agent.learn_and_perform_random_action
+
     if config["agent"]["load table"]:
         smart_agent.load_q_table(config["agent"]["load table"])
 
@@ -67,19 +84,20 @@ if __name__ == '__main__':
     while time() - t0 < config["training time"]:
         fitness_func = nkl.generate_fitness_func(config["nk landscape"]["N"],
                                                  config["nk landscape"]["K"])
-        env.run_episode(
+        sim_record = env.run_episode(
             graph,
             config["nk landscape"]["N"],
             config["deadline"],
             fitness_func,
-            strategy=smart_agent.learn_and_perform_greedy_epsilon_action,
+            strategy=strategy_func,
         )
         if not COUNT % 100:
             mins_passed = (time() -t0)/60
             file_write(output_file,
                        f'count = {COUNT}\n'
-                       f'time = {mins_passed} minutes\n'
-                       f'epsilon = {smart_agent.epsilon}\n')
+                       f'time = {mins_passed} minutes\n')
+            if not config["agent"]["type"] == "SimpleMCAgent":
+                file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
             smart_agent.save_q_table(table_file)
         COUNT += 1
 
