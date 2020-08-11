@@ -1,20 +1,24 @@
 """A script for comparing different policies."""
 
 import numpy as np
-import networkx as nx
+import igraph as ig
 import matplotlib.pyplot as plt
 
 import nklandscapes as nkl
 import environment as env
 
 
-def line_and_error(axis, x, y, y_std, label):
-    axis.fill_between(x, y + y_std, y - y_std, alpha=0.2)
-    axis.plot(x, y, label=label)
+def line_and_error(axis, x, y, y_err, label, colour, alpha):
+    axis.fill_between(x, y + y_err, y - y_err, color=colour, alpha=alpha*0.1)
+    axis.plot(x, y + y_err, linewidth=0.5,
+              linestyle=":", color=colour, alpha=alpha)
+    axis.plot(x, y - y_err, linewidth=0.5,
+              linestyle=":", color=colour, alpha=alpha)
+    axis.plot(x, y, label=label, color=colour, alpha=alpha, linewidth=1)
 
 
 if __name__ == '__main__':
-    np.random.seed(42)
+    np.random.seed(897234)
     N, K = 12, 5
 
     NUM_NODES = 60
@@ -23,36 +27,69 @@ if __name__ == '__main__':
     DEADLINE = 50
     ITERATIONS = 20
 
-    graph = nx.complete_graph(NUM_NODES)
+    #graph = nx.complete_graph(NUM_NODES)
     #graph = nx.random_regular_graph(DEGREE, NUM_NODES)
+    #graph = ig.Graph.Full(NUM_NODES)
+    graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
 
 
-    smart_agent = env.QLearningAgent(
+    time_only = env.SimpleQLearningAgent(
+        DEADLINE,
+        epsilon_decay=1e-6,
+    )
+    time_only.load_q_table('trained/time_only.np')
+
+    random_agent = env.QLearningAgent(
         DEADLINE,
         epsilon_decay=1e-6,
         quantisation_levels=50,
-        use_best_neighbour=False,
+        state_components=["time"],
     )
-    smart_agent.load_q_table('run2.np')
+
+
+    mc_agent = env.SimpleMCAgent(
+        DEADLINE,
+    )
+    mc_agent.load_q_table('trained/first_mc.np')
 
 
     policies = {
-            'best then step' : (
-                env.action_best_then_step,
-                5,
-            ),
-            'step then best' : (
-                env.action_step_then_best,
-                5,
-            ),
-            'modal then step' : (
-                env.action_modal_then_step,
-                5,
-            ),
-            'smarty pants' : (
-                smart_agent.perform_best_action,
-                None,
-            ),
+            'modal then step None' : {
+                "strategy" : env.action_modal_then_step,
+                "sample" : None,
+                "colour" : "green",
+                "alpha" : 1,
+            },
+            'best then step None' : {
+                "strategy" : env.action_best_then_step,
+                "sample" : None,
+                "colour" : "orange",
+                "alpha" : 1,
+            },
+            'step then best None' : {
+                "strategy" : env.action_step_then_best,
+                "sample" : None,
+                "colour" : "brown",
+                "alpha" : 1,
+            },
+            'time only agent' : {
+                "strategy" : time_only.perform_greedy_action,
+                "sample" : None,
+                "colour" : "red",
+                "alpha" : 1,
+            },
+            'random agent' : {
+                "strategy" : random_agent.perform_greedy_action,
+                "sample" : None,
+                "colour" : "purple",
+                "alpha" : 1,
+            },
+            'mc agent' : {
+                "strategy" : mc_agent.perform_greedy_action,
+                "sample" : None,
+                "colour" : "pink",
+                "alpha" : 1,
+            },
     }
 
     sim_records = {}
@@ -67,14 +104,14 @@ if __name__ == '__main__':
                 N,
                 DEADLINE,
                 fitness_func,
-                strategy=policies[policy_name][0],
-                neighbour_sample_size=policies[policy_name][1],
+                strategy=policies[policy_name]["strategy"],
+                neighbour_sample_size=policies[policy_name]["sample"],
             ))
 
 
     fitnesses = {}
     fitness_means = {}
-    fitness_stds = {}
+    fitness_95confidence = {}
     for policy_name, policy_sim_records in sim_records.items():
         fitnesses[policy_name] = np.empty((ITERATIONS, DEADLINE))
 
@@ -84,15 +121,18 @@ if __name__ == '__main__':
                     np.mean(sim_record.fitnesses, axis=0)
 
         fitness_means[policy_name] = np.mean(fitnesses[policy_name], axis=0)
-        fitness_stds[policy_name] = np.std(fitnesses[policy_name], axis=0)
+        fitness_95confidence[policy_name] = 1.96 \
+                * np.std(fitnesses[policy_name], axis=0) / np.sqrt(ITERATIONS)
 
 
         line_and_error(
                 plt,
                 range(DEADLINE),
                 fitness_means[policy_name],
-                fitness_stds[policy_name],
+                fitness_95confidence[policy_name],
                 policy_name,
+                policies[policy_name]["colour"],
+                policies[policy_name]["alpha"],
         )
 
     plt.legend()

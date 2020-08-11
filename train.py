@@ -4,7 +4,7 @@ import sys
 import json
 from time import time
 import numpy as np
-import networkx as nx
+import igraph as ig
 
 import nklandscapes as nkl
 import environment as env
@@ -41,11 +41,11 @@ if __name__ == '__main__':
 
     np.random.seed(config["seed"])
 
-    if config["graph"]["type"] == "random regular":
-        graph = nx.random_regular_graph(config["graph"]["degree"],
-                                        config["graph"]["num_nodes"])
+    if config["graph"]["type"] == "regular":
+        graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
+                                   config["graph"]["degree"])
     else:
-        graph = nx.complete_graph(config["graph"]["num_nodes"])
+        graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
 
     # make and train agent

@@ -991,7 +991,7 @@ def run_episode(
 ):
     """A single episode of the simulation."""
 
-    num_nodes = len(graph)
+    num_nodes = graph.vcount()
 
     sim_record = SimulationRecord(num_nodes, deadline, num_processes=4)
     sim_record.set_random_initial_position(num_bits, fitness_func)
