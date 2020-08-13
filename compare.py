@@ -18,17 +18,15 @@ def line_and_error(axis, x, y, y_err, label, colour, alpha):
 
 
 if __name__ == '__main__':
-    np.random.seed(897234)
+    np.random.seed(789543218)
     N, K = 12, 5
 
     NUM_NODES = 60
     DEGREE = 4
 
     DEADLINE = 50
-    ITERATIONS = 20
+    ITERATIONS = 500
 
-    #graph = nx.complete_graph(NUM_NODES)
-    #graph = nx.random_regular_graph(DEGREE, NUM_NODES)
     #graph = ig.Graph.Full(NUM_NODES)
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
 
@@ -39,55 +37,29 @@ if __name__ == '__main__':
     )
     time_only.load_q_table('trained/time_only.np')
 
-    random_agent = env.QLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-6,
-        quantisation_levels=50,
-        state_components=["time"],
-    )
-
-
-    mc_agent = env.SimpleMCAgent(
-        DEADLINE,
-    )
-    mc_agent.load_q_table('trained/first_mc.np')
-
-
     policies = {
-            'modal then step None' : {
+            'conformity imitation then step' : {
                 "strategy" : env.action_modal_then_step,
                 "sample" : None,
                 "colour" : "green",
                 "alpha" : 1,
             },
-            'best then step None' : {
+            'best member imitation then step' : {
                 "strategy" : env.action_best_then_step,
+                "sample" : None,
+                "colour" : "blue",
+                "alpha" : 1,
+            },
+            'step then best member imitation' : {
+                "strategy" : env.action_step_then_best,
                 "sample" : None,
                 "colour" : "orange",
                 "alpha" : 1,
             },
-            'step then best None' : {
-                "strategy" : env.action_step_then_best,
-                "sample" : None,
-                "colour" : "brown",
-                "alpha" : 1,
-            },
-            'time only agent' : {
+            'Q learning agent' : {
                 "strategy" : time_only.perform_greedy_action,
                 "sample" : None,
-                "colour" : "red",
-                "alpha" : 1,
-            },
-            'random agent' : {
-                "strategy" : random_agent.perform_greedy_action,
-                "sample" : None,
                 "colour" : "purple",
-                "alpha" : 1,
-            },
-            'mc agent' : {
-                "strategy" : mc_agent.perform_greedy_action,
-                "sample" : None,
-                "colour" : "pink",
                 "alpha" : 1,
             },
     }
@@ -135,5 +107,8 @@ if __name__ == '__main__':
                 policies[policy_name]["alpha"],
         )
 
+    plt.xlabel("Time Step")
+    plt.ylabel("Average Score")
+    plt.grid(True)
     plt.legend()
     plt.show()
