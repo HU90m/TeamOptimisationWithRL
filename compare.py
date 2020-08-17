@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 
 import nklandscapes as nkl
 import environment as env
+
 from actions import ACTION_NUM, ACTION_FUNC
+from agents import SimpleQLearningAgent
 
 
 def line_and_error(axis, x, y, y_err, label, colour, alpha):
@@ -32,19 +34,19 @@ if __name__ == '__main__':
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
 
 
-    time_only = env.SimpleQLearningAgent(
+    time_only = SimpleQLearningAgent(
         DEADLINE,
         epsilon_decay=1e-6,
     )
     time_only.load_q_table('trained/time_only.np')
 
     policies = {
-            'conformity imitation then step' : {
-                "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
-                "sample" : None,
-                "colour" : "green",
-                "alpha" : 1,
-            },
+            #'conformity imitation then step' : {
+            #    "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
+            #    "sample" : None,
+            #    "colour" : "green",
+            #    "alpha" : 1,
+            #},
             'best member imitation then step' : {
                 "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
                 "sample" : None,
@@ -57,12 +59,18 @@ if __name__ == '__main__':
                 "colour" : "orange",
                 "alpha" : 1,
             },
-            #'Q learning agent' : {
-            #    "strategy" : time_only.perform_greedy_action,
-            #    "sample" : None,
-            #    "colour" : "purple",
-            #    "alpha" : 1,
-            #},
+            'Q learning agent' : {
+                "strategy" : time_only.perform_greedy_action,
+                "sample" : None,
+                "colour" : "purple",
+                "alpha" : 1,
+            },
+            'Q learning agent 2' : {
+                "strategy" : time_only.perform_n_greedy_actions,
+                "sample" : None,
+                "colour" : "red",
+                "alpha" : 1,
+            },
     }
 
     sim_records = {}
