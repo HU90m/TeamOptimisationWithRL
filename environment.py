@@ -4,63 +4,12 @@
 # Imports
 ###############################################################################
 #
-import multiprocessing as mp
 from multiprocessing import sharedctypes
-from collections import Counter
 import numpy as np
 from numpy import random
-import bitmanipulation as bitm
 
-
-
-###############################################################################
-# Constants
-###############################################################################
-#
-# Actions
-#
-# action index -> action name
-ACTION_STR = [
-        'step',
-        'teleport',
-        'best',
-        'modal',
-        'best_then_step',
-        'step_then_best',
-        'modal_then_step',
-]
-# action name -> action index
-ACTION_NUM = {
-        'step' : 0,
-        'teleport' : 1,
-        'best' : 2,
-        'modal' : 3,
-        'best_then_step' : 4,
-        'step_then_best' : 5,
-        'modal_then_step' : 6,
-}
-# action index -> action function
-ACTION_FUNC = {}
-
-#
-# Outcomes
-#
-# outcome index -> outcome name
-OUTCOME_STR = [
-        'no change',
-        'stepped',
-        'teleported',
-        'copied best',
-        'copied a modal',
-]
-# outcome name -> outcome index
-OUTCOME_NUM = {
-        'no change' : 0,
-        'stepped' : 1,
-        'teleported' : 2,
-        'copied best' : 3,
-        'copied a modal' : 4,
-}
+from actions import ACTION_STR, ACTION_NUM, ACTION_FUNC
+from actions import OUTCOME_STR, OUTCOME_NUM
 
 
 ###############################################################################
@@ -112,12 +61,10 @@ class SimulationRecord():
                 dtype='I',
             ).reshape((num_nodes, deadline))
 
-    def set_random_initial_position(self, num_bits, fitness_func):
+    def set_random_initial_position(self, num_bits):
         '''Sets a random position for each node at time 0.'''
         for node in range(self.num_nodes):
             self.positions[node, 0] = random.randint(2**num_bits)
-            self.fitnesses[node, 0] = \
-                    fitness_func[self.positions[node, 0]]
             self.actions[node, 0] = ACTION_NUM['teleport']
             self.outcomes[node, 0] = OUTCOME_NUM['teleported']
 
@@ -234,182 +181,12 @@ class SimulationRecord():
             )
             cumulative_values = cumulative_values + values
 
-
-###############################################################################
-# Action Function Components
-###############################################################################
-#
-def find_best_neighbour(time, sim_record, fitness_func, neighbours):
-    """Finds the position of the neighbour with the highest fitness."""
-    neighbours_fitness = [
-        fitness_func[sim_record.positions[neighbour, time]]
-        for neighbour in neighbours
-    ]
-    return sim_record.positions[np.argmax(neighbours_fitness), time]
-
-
-def random_step_search(time, node, sim_record, num_bits):
-    """Flips a random bit of the previous position."""
-    last_position = sim_record.positions[node, time]
-    return bitm.flip_random_bit(num_bits, last_position)
-
-
-def random_teleport_search(num_bits):
-    """Returns a random integer from 0 to N-1."""
-    return random.randint(num_bits)
-
-
-###############################################################################
-# Action Functions
-###############################################################################
-#
-def action_best_then_step(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
-    """
-    Find the neighbour with the best performance.
-    If their performance is better, take their position.
-    Otherwise, check to see if the search position has better performance.
-    If it does, take the search position.
-    Otherwise, keep last position.
-    """
-    best_neighbour_position = \
-            find_best_neighbour(time, sim_record, fitness_func, neighbours)
-    best_neighbour_fitness = fitness_func[best_neighbour_position]
-
-    # search for a possible next position
-    search_position = random_step_search(time, node, sim_record, num_bits)
-
-    current_node_fitness = fitness_func[sim_record.positions[node, time]]
-    if best_neighbour_fitness > current_node_fitness:
-        next_position = best_neighbour_position
-        outcome = OUTCOME_NUM['copied best']
-    elif fitness_func[search_position] > current_node_fitness:
-        next_position = search_position
-        outcome = OUTCOME_NUM['stepped']
-    else:
-        next_position = sim_record.positions[node, time]
-        outcome = OUTCOME_NUM['no change']
-
-    # update simulation record
-    sim_record.positions[node, time +1] = next_position
-    sim_record.fitnesses[node, time +1] = fitness_func[next_position]
-    sim_record.actions[node, time +1] = ACTION_NUM['best_then_step']
-    sim_record.outcomes[node, time +1] = outcome
-
-ACTION_FUNC[ACTION_NUM["best_then_step"]] = action_best_then_step
-
-
-def action_step_then_best(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
-    """
-    Check to see if the search position has better performance.
-    If it does, take the search position.
-    Otherwise, find the neighbour with the best performance.
-    If their performance is better, take their position.
-    Otherwise, keep last position.
-    """
-    # search for a possible next position
-    step_position = random_step_search(time, node, sim_record, num_bits)
-
-    # makes decision
-    current_node_fitness = fitness_func[sim_record.positions[node, time]]
-
-    if fitness_func[step_position] > current_node_fitness:
-        next_position = step_position
-        outcome = OUTCOME_NUM['stepped']
-
-    else:
-        best_neighbour_position = \
-                find_best_neighbour(time, sim_record, fitness_func, neighbours)
-        best_neighbour_fitness = fitness_func[best_neighbour_position]
-
-        if best_neighbour_fitness > current_node_fitness:
-            next_position = best_neighbour_position
-            outcome = OUTCOME_NUM['copied best']
-        else:
-            next_position = sim_record.positions[node, time]
-            outcome = OUTCOME_NUM['no change']
-
-    # update simulation record
-    sim_record.positions[node, time +1] = next_position
-    sim_record.fitnesses[node, time +1] = fitness_func[next_position]
-    sim_record.actions[node, time +1] = ACTION_NUM['step_then_best']
-    sim_record.outcomes[node, time +1] = outcome
-
-ACTION_FUNC[ACTION_NUM["step_then_best"]] = action_step_then_best
-
-
-def action_modal_then_step(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
-    """
-    Try to find a fitness_func occurring more than once among neighbours.
-    If successful, take the position of one of these neighbours at random.
-    Otherwise, check to see if the search position has better performance.
-    If it does, take the search position.
-    Otherwise, keep last position.
-    """
-    # finds a neighbour with modal fitness_func
-    neighbours_fitness = np.empty(len(neighbours))
-    for neighbour_idx, neighbour in enumerate(neighbours):
-        neighbours_fitness[neighbour_idx] = \
-                fitness_func[sim_record.positions[neighbour, time]]
-
-    neighbours_fitness_freq = Counter(neighbours_fitness)
-
-    min_freq = 1
-    modal_fitness = 0
-    for key, value in neighbours_fitness_freq.items():
-        if value > min_freq:
-            min_freq = value
-            modal_fitness = key
-
-    # search for a possible next position
-    step_position = random_step_search(time, node, sim_record, num_bits)
-
-    # makes decision
-    current_node_fitness = fitness_func[sim_record.positions[node, time]]
-
-    if modal_fitness > current_node_fitness:
-        modal_neighbour_idxs = np.where(neighbours_fitness == modal_fitness)[0]
-        rand_idx = random.randint(len(modal_neighbour_idxs))
-        neighbour = neighbours[modal_neighbour_idxs[rand_idx]]
-
-        next_position = sim_record.positions[neighbour, time]
-        outcome = OUTCOME_NUM['copied a modal']
-
-    elif fitness_func[step_position] > current_node_fitness:
-        next_position = step_position
-        outcome = OUTCOME_NUM['stepped']
-
-    else:
-        next_position = sim_record.positions[node, time]
-        outcome = OUTCOME_NUM['no change']
-
-    # update simulation record
-    sim_record.positions[node, time +1] = next_position
-    sim_record.fitnesses[node, time +1] = fitness_func[next_position]
-    sim_record.actions[node, time +1] = ACTION_NUM['modal_then_step']
-    sim_record.outcomes[node, time +1] = outcome
-
-ACTION_FUNC[ACTION_NUM["modal_then_step"]] = action_modal_then_step
+    def fill_fitnesses(self, fitness_func):
+        """Fills the fitnesses for each node and time."""
+        for time in range(self.deadline):
+            for node in range(self.num_nodes):
+                self.fitnesses[node, time] = \
+                    fitness_func[self.positions[node, time]]
 
 
 ###############################################################################
@@ -463,12 +240,12 @@ class SimpleMCAgent():
 
         # perform action
         ACTION_FUNC[action](
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
         )
 
     def learn_and_perform_random_action(
@@ -491,12 +268,12 @@ class SimpleMCAgent():
 
         # perform action
         ACTION_FUNC[action](
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
         )
 
         # if at the end of an episode
@@ -506,8 +283,8 @@ class SimpleMCAgent():
             for step in range(1, self.deadline -1):
                 action_idx = sim_record.actions[node, step]
                 self.q_table[
-                        step,
-                        self.possible_actions.index(action_idx),
+                    step,
+                    self.possible_actions.index(action_idx),
                 ] += reward
 
     def save_q_table(self, file_name):
@@ -630,12 +407,12 @@ class SimpleQLearningAgent():
 
         # perform action
         ACTION_FUNC[action](
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
         )
 
     def learn_and_perform_epsilon_greedy_action(
@@ -668,12 +445,12 @@ class SimpleQLearningAgent():
 
         # perform action
         ACTION_FUNC[action](
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
         )
 
     def save_q_table(self, file_name):
@@ -936,7 +713,7 @@ class QLearningAgent():
             )
 
         # decide on next action
-        action = self._greedy_epsilon_choose_action(current_state)
+        action = self._epsilon_greedy_choose_action(current_state)
 
         # perform action
         self._perform_action(num_bits, time, node, neighbours,
@@ -985,16 +762,15 @@ def run_episode(
         num_bits,
         deadline,
         fitness_func,
+        strategy,
         neighbour_sample_size=None,
-        num_processes=1,
-        strategy=action_best_then_step,
 ):
     """A single episode of the simulation."""
 
     num_nodes = graph.vcount()
 
     sim_record = SimulationRecord(num_nodes, deadline, num_processes=4)
-    sim_record.set_random_initial_position(num_bits, fitness_func)
+    sim_record.set_random_initial_position(num_bits)
 
     for time in range(deadline -1):
         for node in range(num_nodes):

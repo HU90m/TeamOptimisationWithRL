@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import nklandscapes as nkl
 import environment as env
+from actions import ACTION_NUM, ACTION_FUNC
 
 
 def line_and_error(axis, x, y, y_err, label, colour, alpha):
@@ -39,29 +40,29 @@ if __name__ == '__main__':
 
     policies = {
             'conformity imitation then step' : {
-                "strategy" : env.action_modal_then_step,
+                "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
                 "sample" : None,
                 "colour" : "green",
                 "alpha" : 1,
             },
             'best member imitation then step' : {
-                "strategy" : env.action_best_then_step,
+                "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
                 "sample" : None,
                 "colour" : "blue",
                 "alpha" : 1,
             },
             'step then best member imitation' : {
-                "strategy" : env.action_step_then_best,
+                "strategy" : ACTION_FUNC[ACTION_NUM['step_then_best']],
                 "sample" : None,
                 "colour" : "orange",
                 "alpha" : 1,
             },
-            'Q learning agent' : {
-                "strategy" : time_only.perform_greedy_action,
-                "sample" : None,
-                "colour" : "purple",
-                "alpha" : 1,
-            },
+            #'Q learning agent' : {
+            #    "strategy" : time_only.perform_greedy_action,
+            #    "sample" : None,
+            #    "colour" : "purple",
+            #    "alpha" : 1,
+            #},
     }
 
     sim_records = {}
@@ -69,16 +70,18 @@ if __name__ == '__main__':
         sim_records[policy_name] = []
 
     for iteration in range(ITERATIONS):
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=3)
+        fitness_func = nkl.generate_fitness_func(N, K, num_processes=4)
         for policy_name in policies:
-             sim_records[policy_name].append(env.run_episode(
+            sim_record = env.run_episode(
                 graph,
                 N,
                 DEADLINE,
                 fitness_func,
-                strategy=policies[policy_name]["strategy"],
+                policies[policy_name]["strategy"],
                 neighbour_sample_size=policies[policy_name]["sample"],
-            ))
+            )
+            sim_record.fill_fitnesses(fitness_func)
+            sim_records[policy_name].append(sim_record)
 
 
     fitnesses = {}
