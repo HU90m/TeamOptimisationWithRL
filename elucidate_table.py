@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import nklandscapes as nkl
 import environment as env
 
+from agents import SimpleQLearningAgent, QLearningAgent
+
 
 def get_config():
     """Loads the config file given in the arguments."""
@@ -27,7 +29,7 @@ if __name__ == '__main__':
     np.random.seed(config["seed"])
 
     if config["agent"]["type"] == "QLearningAgent":
-        smart_agent = env.QLearningAgent(
+        smart_agent = QLearningAgent(
             config["deadline"],
             epsilon_decay=config["agent"]["epsilon decay"],
             quantisation_levels=config["agent"]["quantisation levels"],
@@ -53,7 +55,7 @@ if __name__ == '__main__':
                 axs[1, idx].legend()
 
     else:
-        smart_agent = env.SimpleMCAgent(
+        smart_agent = SimpleQLearningAgent(
             config["deadline"],
         )
         name = config['name']

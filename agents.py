@@ -3,7 +3,7 @@
 import numpy as np
 from numpy import random
 
-from actions import ACTION_NUM, ACTION_FUNC
+from actions import ACTION_NUM, ACTION_STR, ACTION_FUNC
 
 
 ###############################################################################
