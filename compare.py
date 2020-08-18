@@ -21,7 +21,7 @@ def line_and_error(axis, x, y, y_err, label, colour, alpha):
 
 
 if __name__ == '__main__':
-    np.random.seed(789543218)
+    np.random.seed(23583148)
     N, K = 12, 5
 
     NUM_NODES = 60
@@ -39,6 +39,18 @@ if __name__ == '__main__':
         epsilon_decay=1e-6,
     )
     time_only.load_q_table('trained/time_only.np')
+
+    randy = SimpleQLearningAgent(
+        DEADLINE,
+        epsilon_decay=1e-6,
+        random_initialisation=True,
+    )
+
+    comp = SimpleQLearningAgent(
+        DEADLINE,
+        epsilon_decay=1e-6,
+    )
+    comp.load_q_table('agent/comp/comp-4400.np')
 
     policies = {
             #'conformity imitation then step' : {
@@ -59,16 +71,16 @@ if __name__ == '__main__':
                 "colour" : "orange",
                 "alpha" : 1,
             },
-            'Q learning agent' : {
-                "strategy" : time_only.perform_greedy_action,
+            'Random' : {
+                "strategy" : randy.perform_n_greedy_actions,
                 "sample" : None,
                 "colour" : "purple",
                 "alpha" : 1,
             },
             'Q learning agent 2' : {
-                "strategy" : time_only.perform_n_greedy_actions,
+                "strategy" : comp.perform_n_greedy_actions,
                 "sample" : None,
-                "colour" : "red",
+                "colour" : "green",
                 "alpha" : 1,
             },
     }
@@ -78,7 +90,7 @@ if __name__ == '__main__':
         sim_records[policy_name] = []
 
     for iteration in range(ITERATIONS):
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=4)
+        fitness_func = nkl.generate_fitness_func(N, K, num_processes=3)
         for policy_name in policies:
             sim_record = env.run_episode(
                 graph,
