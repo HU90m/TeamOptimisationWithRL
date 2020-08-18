@@ -159,6 +159,7 @@ class SimpleQLearningAgent():
                 ACTION_NUM['step_then_best'],
                 ACTION_NUM['modal_then_step'],
             ),
+            random_initialisation=False,
     ):
         # learning variables
         self.deadline = deadline
@@ -175,9 +176,12 @@ class SimpleQLearningAgent():
             self.action2idx[possible_action] = action_idx
 
         # generate q table
-        self.q_table = random.uniform(
-            size=(self.deadline -1, len(possible_actions)),
-        )
+        if random_initialisation:
+            self.q_table = random.uniform(
+                    size=(self.deadline -1, len(possible_actions)),
+            )
+        else:
+            self.q_table = np.zeros((self.deadline -1, len(possible_actions)))
 
     def _update_q_table(self, state, action, next_state, reward):
         """Updates the Q table after an action has been taken."""
@@ -357,6 +361,7 @@ class QLearningAgent():
                 ACTION_NUM['step_then_best'],
                 ACTION_NUM['modal_then_step'],
             ),
+            random_initialisation=False,
     ):
         # learning variables
         self.deadline = deadline
@@ -385,9 +390,14 @@ class QLearningAgent():
                 self.state_dimensions += [quantisation_levels]
 
         # generate q table
-        self.q_table = random.uniform(
-            size=(list(self.state_dimensions) + [len(possible_actions)]),
-        )
+        if random_initialisation:
+            self.q_table = random.uniform(
+                size=(list(self.state_dimensions) + [len(possible_actions)]),
+            )
+        else:
+            self.q_table = np.zeros(
+                list(self.state_dimensions) + [len(possible_actions)],
+            )
 
     def _find_state(self, time, node, neighbours, fitness_func, sim_record):
         """Find a node's state at the given time."""
