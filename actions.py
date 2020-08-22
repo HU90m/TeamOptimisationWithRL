@@ -70,6 +70,8 @@ def action_step(
         sim_record,
 ):
     """Worker takes a random step, if it leads to a better position"""
+    sim_record.actions[node, time+1] = ACTION_NUM['step']
+
     current_pos = sim_record.positions[node, time]
     random_step_pos = bitm.flip_random_bit(num_bits, current_pos)
 
@@ -96,6 +98,8 @@ def action_teleport(
         sim_record,
 ):
     """Randomly teleports worker, if better than worker's current position"""
+    sim_record.actions[node, time+1] = ACTION_NUM['teleport']
+
     current_pos = sim_record.positions[node, time]
     teleport_pos = random.randint(num_bits)
 
@@ -124,6 +128,8 @@ def action_best(
     """
     Worker copies their best colleague, if the colleague has a better position.
     """
+    sim_record.actions[node, time+1] = ACTION_NUM['best']
+
     neighbour_fitnesses = [
         fitness_func[sim_record.positions[neighbour, time]]
         for neighbour in neighbours
@@ -155,6 +161,12 @@ def action_modal(
         fitness_func,
         sim_record,
 ):
+    """
+    If more than one colleague has the same fitness,
+    the worker copies one of these colleagues.
+    """
+    sim_record.actions[node, time+1] = ACTION_NUM['modal']
+
     neighbour_fitnesses = [
         fitness_func[sim_record.positions[neighbour, time]]
         for neighbour in neighbours
@@ -204,6 +216,8 @@ def action_best_then_step(
     If it does, take the search position.
     Otherwise, keep last position.
     """
+    sim_record.actions[node, time+1] = ACTION_NUM['best_then_step']
+
     success = action_best(num_bits, time, node,
                           neighbours, fitness_func, sim_record)
     if not success:
@@ -229,6 +243,8 @@ def action_step_then_best(
     If their performance is better, take their position.
     Otherwise, keep last position.
     """
+    sim_record.actions[node, time+1] = ACTION_NUM['step_then_best']
+
     success = action_step(num_bits, time, node,
                           neighbours, fitness_func, sim_record)
     if not success:
@@ -254,6 +270,8 @@ def action_modal_then_step(
     If it does, take the search position.
     Otherwise, keep last position.
     """
+    sim_record.actions[node, time+1] = ACTION_NUM['modal_then_step']
+
     success = action_modal(num_bits, time, node,
                            neighbours, fitness_func, sim_record)
     if not success:
