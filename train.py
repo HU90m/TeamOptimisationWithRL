@@ -47,7 +47,7 @@ if __name__ == '__main__':
     if config["graph"]["type"] == "regular":
         graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
                                    config["graph"]["degree"])
-    else:
+    elif config["graph"]["type"] == "full":
         graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
 
@@ -82,6 +82,7 @@ if __name__ == '__main__':
     elif config["agent"]["type"] == "SimpleMCAgent":
         smart_agent = SimpleMCAgent(
             config["deadline"],
+            learning_rate=config["agent"]["learning rate"],
             possible_actions=possible_actions,
         )
         strategy_func=smart_agent.learn_and_perform_random_action
@@ -93,12 +94,19 @@ if __name__ == '__main__':
     # train agent
     name = config['name']
     output_file = f"{name}.txt"
-    current_table_file = f"{name}.np"
-
-    COUNT = 0
-    training_time = config["training time"] * 60
+    max_time = config["max training time"] * 60
     t0 = time()
-    while time() - t0 < training_time:
+
+    for episode in range(config["episodes"]):
+        if not episode % 100:
+            mins_passed = (time() -t0)/60
+            file_write(output_file,
+                       f'episodes = {episode}\n'
+                       f'time = {mins_passed} minutes\n')
+            if not config["agent"]["type"] == "SimpleMCAgent":
+                file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
+            smart_agent.save_q_table(f"{name}-{episode}.np")
+
         fitness_func = nkl.generate_fitness_func(
                 config["nk landscape"]["N"],
                 config["nk landscape"]["K"],
@@ -111,13 +119,16 @@ if __name__ == '__main__':
             fitness_func,
             strategy=strategy_func,
         )
-        if not COUNT % 100:
-            mins_passed = (time() -t0)/60
-            file_write(output_file,
-                       f'count = {COUNT}\n'
-                       f'time = {mins_passed} minutes\n')
-            if not config["agent"]["type"] == "SimpleMCAgent":
-                file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
-            smart_agent.save_q_table(f"{name}-{COUNT}.np")
-            smart_agent.save_q_table(current_table_file)
-        COUNT += 1
+        if time() - t0 > max_time:
+            break
+
+
+    # final file writes
+    mins_passed = (time() -t0)/60
+    file_write(output_file,
+               f'episodes = {episode}\n'
+               f'time = {mins_passed} minutes\n')
+    if not config["agent"]["type"] == "SimpleMCAgent":
+        file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
+
+    smart_agent.save_q_table(f"{name}.np")
