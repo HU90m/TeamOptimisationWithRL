@@ -19,6 +19,8 @@ class SimpleMCAgent():
             self,
             deadline,
 
+            learning_rate=0.6,
+
             possible_actions=(
                 ACTION_NUM['best_then_step'],
                 ACTION_NUM['step_then_best'],
@@ -26,6 +28,7 @@ class SimpleMCAgent():
             ),
     ):
         self.deadline = deadline
+        self.learning_rate = learning_rate
 
         # set up actions
         self.possible_actions = possible_actions
@@ -99,10 +102,16 @@ class SimpleMCAgent():
 
             for step in range(1, self.deadline -1):
                 action_idx = sim_record.actions[node, step]
+                current_value = self.q_table[
+                    step,
+                    self.possible_actions.index(action_idx),
+                ]
+                update = self.learning_rate * (reward - current_value)
+
                 self.q_table[
                     step,
                     self.possible_actions.index(action_idx),
-                ] += reward
+                ] += update
 
     def save_q_table(self, file_name):
         """Save the q_table with the given file name."""
