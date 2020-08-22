@@ -1,5 +1,7 @@
 """A module containing the agents which can learn strategies for workers."""
 
+import json
+from os import path
 import numpy as np
 from numpy import random
 
@@ -187,7 +189,7 @@ class SimpleQLearningAgent():
         # generate q table
         if random_initialisation:
             self.q_table = random.uniform(
-                    size=(self.deadline -1, len(possible_actions)),
+                size=(self.deadline -1, len(possible_actions)),
             )
         else:
             self.q_table = np.zeros((self.deadline -1, len(possible_actions)))
@@ -266,12 +268,12 @@ class SimpleQLearningAgent():
 
             # attempt action, if successful finish
             if ACTION_FUNC[action](
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
+                    num_bits,
+                    time,
+                    node,
+                    neighbours,
+                    fitness_func,
+                    sim_record,
             ):
                 break
 
@@ -462,45 +464,6 @@ class QLearningAgent():
         self.epsilon -= self.epsilon_decay * self.epsilon
         return action
 
-    def _perform_action(
-            self,
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-            action,
-    ):
-        """Calls the action function corresponding to the given action."""
-        if action == ACTION_NUM['best_then_step']:
-            action_best_then_step(
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
-            )
-        elif action == ACTION_NUM['step_then_best']:
-            action_step_then_best(
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
-            )
-        elif action == ACTION_NUM['modal_then_step']:
-            action_modal_then_step(
-                num_bits,
-                time,
-                node,
-                neighbours,
-                fitness_func,
-                sim_record,
-            )
-
     def save_q_table(self, file_name):
         """Save the q_table with the given file name."""
         with open(file_name, 'wb') as file_handle:
@@ -534,8 +497,14 @@ class QLearningAgent():
         action = self._choose_greedy_action(current_state)
 
         # perform action
-        self._perform_action(num_bits, time, node, neighbours,
-                             fitness_func, sim_record, action)
+        ACTION_FUNC[action](
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
 
     def learn_and_perform_epsilon_greedy_action(
             self,
@@ -582,8 +551,14 @@ class QLearningAgent():
         action = self._epsilon_greedy_choose_action(current_state)
 
         # perform action
-        self._perform_action(num_bits, time, node, neighbours,
-                             fitness_func, sim_record, action)
+        ACTION_FUNC[action](
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
 
     def plot_q_table(self, axis, state_component_name, normalise=True):
         """
@@ -617,3 +592,72 @@ class QLearningAgent():
             cumulative_values = cumulative_values + actions_comp[idx]
 
         axis.set_title(state_component_name)
+
+
+###############################################################################
+# Functions
+###############################################################################
+#
+def load_agent_and_settings(config_location, training=False, episodes=None):
+    """Constructs an agent according to it's configuration file"""
+
+    config_dir, _ = path.split(config_location)
+
+    with open(config_location, 'rb') as file_handle:
+        config = json.load(file_handle)
+
+    np.random.seed(config["seed"])
+
+    # initialise agent
+    possible_actions = [
+        ACTION_NUM[possible_action]
+        for possible_action in config["agent"]["possible actions"]
+    ]
+
+    if config["agent"]["type"] == "QLearningAgent":
+        agent = QLearningAgent(
+            config["deadline"],
+            epsilon_decay=config["agent"]["epsilon decay"],
+            quantisation_levels=config["agent"]["quantisation levels"],
+            state_components=config["agent"]["state components"],
+            learning_rate=config["agent"]["learning rate"],
+            discount_factor=config["agent"]["discount factor"],
+            possible_actions=possible_actions,
+        )
+
+    elif config["agent"]["type"] == "SimpleQLearningAgent":
+        agent = SimpleQLearningAgent(
+            config["deadline"],
+            epsilon_decay=config["agent"]["epsilon decay"],
+            learning_rate=config["agent"]["learning rate"],
+            discount_factor=config["agent"]["discount factor"],
+            possible_actions=possible_actions,
+        )
+
+    elif config["agent"]["type"] == "SimpleMCAgent":
+        agent = SimpleMCAgent(
+            config["deadline"],
+            learning_rate=config["agent"]["learning rate"],
+            possible_actions=possible_actions,
+        )
+
+
+    # load the appropriate q table
+    if training:
+        if config["agent"]["load table"]:
+            agent.load_q_table(
+                path.join(config_dir, config["agent"]["load table"]),
+            )
+    else:
+        name = config['name']
+
+        if episodes:
+            agent.load_q_table(
+                path.join(config_dir, f'{name}-{episodes}.np'),
+            )
+        else:
+            agent.load_q_table(
+                path.join(config_dir, f'{name}.np'),
+            )
+
+    return agent, config, config_dir

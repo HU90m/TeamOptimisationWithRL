@@ -8,16 +8,19 @@ import nklandscapes as nkl
 import environment as env
 
 from actions import ACTION_NUM, ACTION_FUNC
-from agents import SimpleQLearningAgent
+from agents import SimpleQLearningAgent, load_agent_and_settings
 
 
-def line_and_error(axis, x, y, y_err, label, colour, alpha):
-    axis.fill_between(x, y + y_err, y - y_err, color=colour, alpha=alpha*0.1)
-    axis.plot(x, y + y_err, linewidth=0.5,
+def line_and_error(axis, x_values, y_values, y_err, label, colour, alpha):
+    "Plots a line and its error"
+    axis.fill_between(x_values, y_values + y_err, y_values - y_err,
+                      color=colour, alpha=alpha*0.1)
+    axis.plot(x_values, y_values + y_err, linewidth=0.5,
               linestyle=":", color=colour, alpha=alpha)
-    axis.plot(x, y - y_err, linewidth=0.5,
+    axis.plot(x_values, y_values - y_err, linewidth=0.5,
               linestyle=":", color=colour, alpha=alpha)
-    axis.plot(x, y, label=label, color=colour, alpha=alpha, linewidth=1)
+    axis.plot(x_values, y_values, label=label,
+              color=colour, alpha=alpha, linewidth=1)
 
 
 if __name__ == '__main__':
@@ -28,61 +31,57 @@ if __name__ == '__main__':
     DEGREE = 4
 
     DEADLINE = 50
-    ITERATIONS = 500
+    ITERATIONS = 50
 
     #graph = ig.Graph.Full(NUM_NODES)
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
 
 
-    time_only = SimpleQLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-6,
-    )
-    time_only.load_q_table('trained/time_only.np')
-
     randy = SimpleQLearningAgent(
         DEADLINE,
         epsilon_decay=1e-6,
         random_initialisation=True,
+        possible_actions=(
+            ACTION_NUM['step'],
+            ACTION_NUM['best'],
+            ACTION_NUM['modal'],
+        )
     )
 
-    comp = SimpleQLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-6,
-    )
-    comp.load_q_table('agent/comp/comp-4400.np')
+
+    comp, _, _ = load_agent_and_settings('agent/comp/comp.json')
 
     policies = {
-            #'conformity imitation then step' : {
-            #    "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
-            #    "sample" : None,
-            #    "colour" : "green",
-            #    "alpha" : 1,
-            #},
-            'best member imitation then step' : {
-                "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
-                "sample" : None,
-                "colour" : "blue",
-                "alpha" : 1,
-            },
-            'step then best member imitation' : {
-                "strategy" : ACTION_FUNC[ACTION_NUM['step_then_best']],
-                "sample" : None,
-                "colour" : "orange",
-                "alpha" : 1,
-            },
-            'Random' : {
-                "strategy" : randy.perform_n_greedy_actions,
-                "sample" : None,
-                "colour" : "purple",
-                "alpha" : 1,
-            },
-            'Q learning agent 2' : {
-                "strategy" : comp.perform_n_greedy_actions,
-                "sample" : None,
-                "colour" : "green",
-                "alpha" : 1,
-            },
+        #'conformity imitation then step' : {
+        #    "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
+        #    "sample" : None,
+        #    "colour" : "green",
+        #    "alpha" : 1,
+        #},
+        'best member imitation then step' : {
+            "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
+            "sample" : None,
+            "colour" : "blue",
+            "alpha" : 1,
+        },
+        'step then best member imitation' : {
+            "strategy" : ACTION_FUNC[ACTION_NUM['step_then_best']],
+            "sample" : None,
+            "colour" : "orange",
+            "alpha" : 1,
+        },
+        'Random' : {
+            "strategy" : randy.perform_greedy_action,
+            "sample" : None,
+            "colour" : "purple",
+            "alpha" : 1,
+        },
+        'Q learning' : {
+            "strategy" : comp.perform_greedy_action,
+            "sample" : None,
+            "colour" : "green",
+            "alpha" : 1,
+        },
     }
 
     sim_records = {}
@@ -121,13 +120,13 @@ if __name__ == '__main__':
 
 
         line_and_error(
-                plt,
-                range(DEADLINE),
-                fitness_means[policy_name],
-                fitness_95confidence[policy_name],
-                policy_name,
-                policies[policy_name]["colour"],
-                policies[policy_name]["alpha"],
+            plt,
+            range(DEADLINE),
+            fitness_means[policy_name],
+            fitness_95confidence[policy_name],
+            policy_name,
+            policies[policy_name]["colour"],
+            policies[policy_name]["alpha"],
         )
 
     plt.xlabel("Time Step")

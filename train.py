@@ -1,16 +1,15 @@
 """A script for training a Q Learning Agent."""
 
 import sys
-import json
+from os import path
+
 from time import time
-import numpy as np
 import igraph as ig
 
 import nklandscapes as nkl
 import environment as env
 
-from actions import ACTION_NUM
-from agents import QLearningAgent, SimpleQLearningAgent, SimpleMCAgent
+from agents import load_agent_and_settings
 
 
 def file_write(name, line):
@@ -27,7 +26,7 @@ def file_append(name, line):
     file_handle.close()
 
 
-def get_config():
+def get_args():
     """Loads the config file given in the arguments."""
     if len(sys.argv) < 2:
         print(
@@ -35,14 +34,16 @@ def get_config():
         )
         sys.exit(0)
 
-    with open(sys.argv[1], 'rb') as file_handle:
-        return json.load(file_handle)
+    return sys.argv[1]
 
 
 if __name__ == '__main__':
-    config = get_config()
+    config_file = get_args()
 
-    np.random.seed(config["seed"])
+    agent, config, config_dir = \
+        load_agent_and_settings(config_file, training=True)
+
+
 
     if config["graph"]["type"] == "regular":
         graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
@@ -51,49 +52,19 @@ if __name__ == '__main__':
         graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
 
-    # make agent
-    possible_actions = [
-            ACTION_NUM[possible_action]
-            for possible_action in config["agent"]["possible actions"]
-    ]
-
     if config["agent"]["type"] == "QLearningAgent":
-        smart_agent = QLearningAgent(
-            config["deadline"],
-            epsilon_decay=config["agent"]["epsilon decay"],
-            quantisation_levels=config["agent"]["quantisation levels"],
-            state_components=config["agent"]["state components"],
-            learning_rate=config["agent"]["learning rate"],
-            discount_factor=config["agent"]["discount factor"],
-            possible_actions=possible_actions,
-        )
-        strategy_func = smart_agent.learn_and_perform_epsilon_greedy_action
+        strategy_func = agent.learn_and_perform_epsilon_greedy_action
 
     elif config["agent"]["type"] == "SimpleQLearningAgent":
-        smart_agent = SimpleQLearningAgent(
-            config["deadline"],
-            epsilon_decay=config["agent"]["epsilon decay"],
-            learning_rate=config["agent"]["learning rate"],
-            discount_factor=config["agent"]["discount factor"],
-            possible_actions=possible_actions,
-        )
-        strategy_func = smart_agent.learn_and_perform_epsilon_greedy_action
+        strategy_func = agent.learn_and_perform_epsilon_greedy_action
 
     elif config["agent"]["type"] == "SimpleMCAgent":
-        smart_agent = SimpleMCAgent(
-            config["deadline"],
-            learning_rate=config["agent"]["learning rate"],
-            possible_actions=possible_actions,
-        )
-        strategy_func=smart_agent.learn_and_perform_random_action
-
-    if config["agent"]["load table"]:
-        smart_agent.load_q_table(config["agent"]["load table"])
+        strategy_func = agent.learn_and_perform_random_action
 
 
     # train agent
     name = config['name']
-    output_file = f"{name}.txt"
+    output_file = path.join(config_dir, f"{name}.txt")
     max_time = config["max training time"] * 60
     t0 = time()
 
@@ -103,14 +74,18 @@ if __name__ == '__main__':
             file_write(output_file,
                        f'episodes = {episode}\n'
                        f'time = {mins_passed} minutes\n')
+
             if not config["agent"]["type"] == "SimpleMCAgent":
-                file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
-            smart_agent.save_q_table(f"{name}-{episode}.np")
+                file_append(output_file, f'epsilon = {agent.epsilon}\n')
+
+            agent.save_q_table(
+                path.join(config_dir, f"{name}-{episode}.np"),
+            )
 
         fitness_func = nkl.generate_fitness_func(
-                config["nk landscape"]["N"],
-                config["nk landscape"]["K"],
-                num_processes=config["num processes"],
+            config["nk landscape"]["N"],
+            config["nk landscape"]["K"],
+            num_processes=config["num processes"],
         )
         sim_record = env.run_episode(
             graph,
@@ -129,6 +104,6 @@ if __name__ == '__main__':
                f'episodes = {episode}\n'
                f'time = {mins_passed} minutes\n')
     if not config["agent"]["type"] == "SimpleMCAgent":
-        file_append(output_file, f'epsilon = {smart_agent.epsilon}\n')
+        file_append(output_file, f'epsilon = {agent.epsilon}\n')
 
-    smart_agent.save_q_table(f"{name}.np")
+    agent.save_q_table(path.join(config_dir, f"{name}.np"))
