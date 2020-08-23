@@ -39,7 +39,7 @@ class SimpleMCAgent():
             self.action2idx[possible_action] = action_idx
 
         # generate q table
-        self.q_table = np.ones((self.deadline -1, len(possible_actions)))
+        self.q_table = np.zeros((self.deadline -1, len(possible_actions)))
 
     def _choose_greedy_action(self, current_state):
         """
@@ -130,11 +130,16 @@ class SimpleMCAgent():
         Plots the perceived utility of the actions
         for the all values of time.
         """
-        time_actions = self.q_table
+        time_actions = np.copy(self.q_table)
         if normalise:
             for idx, _ in enumerate(time_actions):
-                time_actions[idx] = \
-                        time_actions[idx] /np.sum(time_actions[idx])
+                total = np.sum(time_actions[idx])
+                if total:
+                    time_actions[idx] = \
+                            time_actions[idx] / total
+                else:
+                    time_actions[idx] = \
+                            time_actions[idx] * 0
 
         actions_time = np.swapaxes(time_actions, 0, 1)
 
@@ -277,7 +282,7 @@ class SimpleQLearningAgent():
             ):
                 break
 
-    def learn_and_perform_epsilon_greedy_action(
+    def learn_all_rewards_and_perform_epsilon_greedy_action(
             self,
             num_bits,
             time,
@@ -288,12 +293,54 @@ class SimpleQLearningAgent():
     ):
         """
         Learns from the previous time step
+        (with a reward available at each step)
         and performs the epsilon greedy action for a given state.
         """
         # if not first run learn from the last decision
         if time > 1:
             reward = fitness_func[sim_record.positions[node, time]] \
                     - fitness_func[sim_record.positions[node, time -1]]
+
+            self._update_q_table(
+                time -1,
+                sim_record.actions[node, time-1],
+                time,
+                reward,
+            )
+
+        # decide on next action
+        action = self._choose_epsilon_greedy_action(time)
+
+        # perform action
+        ACTION_FUNC[action](
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
+
+    def learn_end_reward_and_perform_epsilon_greedy_action(
+            self,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+    ):
+        """
+        Learns from the previous time step
+        (with a reward only available at the end)
+        and performs the epsilon greedy action for a given state.
+        """
+        # if not first run learn from the last decision
+        if time > 1:
+            if time == self.deadline -2:
+                reward = fitness_func[sim_record.positions[node, time]]
+            else:
+                reward = 0
 
             self._update_q_table(
                 time -1,
@@ -330,11 +377,17 @@ class SimpleQLearningAgent():
         Plots the perceived utility of the actions
         for the all values of time.
         """
-        time_actions = self.q_table
+        time_actions = np.copy(self.q_table)
+
         if normalise:
             for idx, _ in enumerate(time_actions):
-                time_actions[idx] = \
-                        time_actions[idx] /np.sum(time_actions[idx])
+                total = np.sum(time_actions[idx])
+                if total:
+                    time_actions[idx] = \
+                            time_actions[idx] / total
+                else:
+                    time_actions[idx] = \
+                            time_actions[idx] * 0
 
         actions_time = np.swapaxes(time_actions, 0, 1)
 
@@ -565,9 +618,10 @@ class QLearningAgent():
         Plots the perceived utility of the actions
         for the all values of a state component.
         """
-
         comp_idx = self.state_components.index(state_component_name)
-        comp_q_table = np.swapaxes(self.q_table, 0, comp_idx)
+
+        local_table = np.copy(self.q_table)
+        comp_q_table = np.swapaxes(local_table, 0, comp_idx)
 
         comp_actions = np.sum(
             comp_q_table,
@@ -576,8 +630,13 @@ class QLearningAgent():
         )
         if normalise:
             for idx, _ in enumerate(comp_actions):
-                comp_actions[idx] = \
-                        comp_actions[idx] /np.sum(comp_actions[idx])
+                total = np.sum(comp_actions[idx])
+                if total:
+                    comp_actions[idx] = \
+                            comp_actions[idx] / total
+                else:
+                    comp_actions[idx] = \
+                            comp_actions[idx] * 0
 
         actions_comp = np.swapaxes(comp_actions, 0, 1)
 
@@ -640,7 +699,6 @@ def load_agent_and_settings(config_location, training=False, episodes=None):
             learning_rate=config["agent"]["learning rate"],
             possible_actions=possible_actions,
         )
-
 
     # load the appropriate q table
     if training:
