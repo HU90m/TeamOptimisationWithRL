@@ -44,19 +44,24 @@ if __name__ == '__main__':
         load_agent_and_settings(config_file, training=True)
 
 
-
     if config["graph"]["type"] == "regular":
         graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
                                    config["graph"]["degree"])
     elif config["graph"]["type"] == "full":
         graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
-
+    # provide appropriate training function
     if config["agent"]["type"] == "QLearningAgent":
         strategy_func = agent.learn_and_perform_epsilon_greedy_action
 
     elif config["agent"]["type"] == "SimpleQLearningAgent":
-        strategy_func = agent.learn_and_perform_epsilon_greedy_action
+        if config["agent"]["rewards"] == "all":
+            strategy_func = \
+                agent.learn_all_rewards_and_perform_epsilon_greedy_action
+
+        elif config["agent"]["rewards"] == "end":
+            strategy_func = \
+                agent.learn_end_reward_and_perform_epsilon_greedy_action
 
     elif config["agent"]["type"] == "SimpleMCAgent":
         strategy_func = agent.learn_and_perform_random_action
