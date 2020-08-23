@@ -51,10 +51,9 @@ if __name__ == '__main__':
         graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
     # provide appropriate training function
-    if config["agent"]["type"] == "QLearningAgent":
-        strategy_func = agent.learn_and_perform_epsilon_greedy_action
+    if (config["agent"]["type"] == "QLearningAgent" or
+            config["agent"]["type"] == "SimpleQLearningAgent"):
 
-    elif config["agent"]["type"] == "SimpleQLearningAgent":
         if config["agent"]["rewards"] == "all":
             strategy_func = \
                 agent.learn_all_rewards_and_perform_epsilon_greedy_action

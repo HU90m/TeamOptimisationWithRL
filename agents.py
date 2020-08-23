@@ -417,7 +417,6 @@ class QLearningAgent():
             state_components=(
                 'time',
                 'score',
-                #'best_neighbour',
             ),
 
             possible_actions=(
@@ -450,8 +449,6 @@ class QLearningAgent():
                 self.state_dimensions += [deadline]
             elif state_component == 'score':
                 self.state_dimensions += [quantisation_levels]
-            elif state_component == 'best neighbour score':
-                self.state_dimensions += [quantisation_levels]
 
         # generate q table
         if random_initialisation:
@@ -475,14 +472,6 @@ class QLearningAgent():
                 state += [
                     int(round(current_fitness * (self.quantisation_levels -1)))
                 ]
-            elif state_component == 'best neighbour score':
-                best_neighbour_fitness = fitness_func[
-                    find_best_neighbour(time, sim_record,
-                                        fitness_func, neighbours)
-                ]
-                state += [int(round(
-                    best_neighbour_fitness * (self.quantisation_levels -1),
-                ))]
         return tuple(state)
 
     def _update_q_table(self, state, action, next_state, reward):
@@ -559,7 +548,7 @@ class QLearningAgent():
             sim_record,
         )
 
-    def learn_and_perform_epsilon_greedy_action(
+    def learn_all_rewards_and_perform_epsilon_greedy_action(
             self,
             num_bits,
             time,
@@ -570,6 +559,7 @@ class QLearningAgent():
     ):
         """
         Learns from the previous time step
+        (with a reward available at each step)
         and performs the epsilon greedy action for a given state.
         """
         # find current state
@@ -592,6 +582,65 @@ class QLearningAgent():
             )
             reward = fitness_func[sim_record.positions[node, time]] \
                     - fitness_func[sim_record.positions[node, time -1]]
+
+            self._update_q_table(
+                last_state,
+                sim_record.actions[node, time-1],
+                current_state,
+                reward,
+            )
+
+        # decide on next action
+        action = self._epsilon_greedy_choose_action(current_state)
+
+        # perform action
+        ACTION_FUNC[action](
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
+
+
+    def learn_end_reward_and_perform_epsilon_greedy_action(
+            self,
+            num_bits,
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+    ):
+        """
+        Learns from the previous time step
+        (with a reward only available at the end)
+        and performs the epsilon greedy action for a given state.
+        """
+        # find current state
+        current_state = self._find_state(
+            time,
+            node,
+            neighbours,
+            fitness_func,
+            sim_record,
+        )
+
+        # if not first run learn from the last decision
+        if time > 1:
+            last_state = self._find_state(
+                time-1,
+                node,
+                neighbours,
+                fitness_func,
+                sim_record,
+            )
+
+            if time == self.deadline -2:
+                reward = fitness_func[sim_record.positions[node, time]]
+            else:
+                reward = 0
 
             self._update_q_table(
                 last_state,
