@@ -55,15 +55,15 @@ if __name__ == '__main__':
             config["agent"]["type"] == "SimpleQLearningAgent"):
 
         if config["agent"]["rewards"] == "all":
-            strategy_func = \
+            action_function = \
                 agent.learn_all_rewards_and_perform_epsilon_greedy_action
 
         elif config["agent"]["rewards"] == "end":
-            strategy_func = \
+            action_function = \
                 agent.learn_end_reward_and_perform_epsilon_greedy_action
 
     elif config["agent"]["type"] == "SimpleMCAgent":
-        strategy_func = agent.learn_and_perform_random_action
+        action_function = agent.learn_and_perform_random_action
 
 
     # train agent
@@ -86,18 +86,20 @@ if __name__ == '__main__':
                 path.join(config_dir, f"{name}-{episode}.np"),
             )
 
-        fitness_func = nkl.generate_fitness_func(
+        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
             config["nk landscape"]["N"],
             config["nk landscape"]["K"],
             num_processes=config["num processes"],
         )
-        sim_record = env.run_episode(
-            graph,
+        sim_record = env.SimulationRecord(
             config["nk landscape"]["N"],
+            config["graph"]["num_nodes"],
             config["deadline"],
             fitness_func,
-            strategy=strategy_func,
+            fitness_func_norm,
         )
+        env.run_episode(graph, sim_record, action_function)
+
         if time() - t0 > max_time:
             break
 

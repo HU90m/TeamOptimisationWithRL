@@ -70,7 +70,6 @@ def find_solution_fitnesses(
 def generate_fitness_func(
         num_bits,
         num_components,
-        fitness_8=True,
         num_processes=1,
 ):
     """
@@ -134,10 +133,7 @@ def generate_fitness_func(
     # The normalised fitness function for each of the 2^N possible solutions
     fitness_func_norm = fitness_func/max(fitness_func)
 
-    if fitness_8:
-        return fitness_func_norm**8
-
-    return fitness_func_norm
+    return fitness_func_norm**8, fitness_func_norm
 
 
 if __name__ == '__main__':

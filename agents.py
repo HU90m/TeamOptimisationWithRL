@@ -47,37 +47,20 @@ class SimpleMCAgent():
         """
         return self.possible_actions[np.argmax(self.q_table[current_state])]
 
-    def perform_greedy_action(
-            self,
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-    ):
+    def perform_greedy_action(self, time, node, sim_record, neighbours):
         """Performs the learned best action for a given state."""
         # decide on next action
         action = self._choose_greedy_action(time)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
     def learn_and_perform_random_action(
             self,
-            num_bits,
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
+            neighbours,
     ):
         """
         Performs the epsilon greedy action for a given state
@@ -89,18 +72,11 @@ class SimpleMCAgent():
 
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
         # if at the end of an episode
         if time == self.deadline -2:
-            reward = fitness_func[sim_record.positions[node, time]]
+            reward = sim_record.fitness_func[sim_record.positions[node, time]]
 
             for step in range(1, self.deadline -1):
                 action_idx = sim_record.actions[node, step]
@@ -225,15 +201,7 @@ class SimpleQLearningAgent():
         self.epsilon -= self.epsilon_decay * self.epsilon
         return action
 
-    def perform_greedy_action(
-            self,
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-    ):
+    def perform_greedy_action(self, time, node, sim_record, neighbours):
         """Performs the learned best action for a given state."""
 
         current_state = time
@@ -241,24 +209,9 @@ class SimpleQLearningAgent():
         action = self.possible_actions[np.argmax(self.q_table[current_state])]
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
-    def perform_n_greedy_actions(
-            self,
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-    ):
+    def perform_n_greedy_actions(self, time, node, sim_record, neighbours):
         """
         Performs the learned N best actions for a given state in order.
         """
@@ -272,24 +225,15 @@ class SimpleQLearningAgent():
             action = self.possible_actions[action_id]
 
             # attempt action, if successful finish
-            if ACTION_FUNC[action](
-                    num_bits,
-                    time,
-                    node,
-                    neighbours,
-                    fitness_func,
-                    sim_record,
-            ):
+            if ACTION_FUNC[action](time, node, sim_record, neighbours):
                 break
 
     def learn_all_rewards_and_perform_epsilon_greedy_action(
             self,
-            num_bits,
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
+            neighbours,
     ):
         """
         Learns from the previous time step
@@ -298,8 +242,11 @@ class SimpleQLearningAgent():
         """
         # if not first run learn from the last decision
         if time > 1:
-            reward = fitness_func[sim_record.positions[node, time]] \
-                    - fitness_func[sim_record.positions[node, time -1]]
+            current_fitness = \
+                sim_record.fitness_func[sim_record.positions[node, time]]
+            last_fitness = \
+                sim_record.fitness_func[sim_record.positions[node, time -1]]
+            reward = current_fitness - last_fitness
 
             self._update_q_table(
                 time -1,
@@ -312,23 +259,14 @@ class SimpleQLearningAgent():
         action = self._choose_epsilon_greedy_action(time)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
     def learn_end_reward_and_perform_epsilon_greedy_action(
             self,
-            num_bits,
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
+            neighbours,
     ):
         """
         Learns from the previous time step
@@ -338,7 +276,8 @@ class SimpleQLearningAgent():
         # if not first run learn from the last decision
         if time > 1:
             if time == self.deadline -2:
-                reward = fitness_func[sim_record.positions[node, time]]
+                reward = \
+                    sim_record.fitness_func[sim_record.positions[node, time]]
             else:
                 reward = 0
 
@@ -353,14 +292,7 @@ class SimpleQLearningAgent():
         action = self._choose_epsilon_greedy_action(time)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
     def save_q_table(self, file_name):
         """Save the q_table with the given file name."""
@@ -460,15 +392,16 @@ class QLearningAgent():
                 list(self.state_dimensions) + [len(possible_actions)],
             )
 
-    def _find_state(self, time, node, neighbours, fitness_func, sim_record):
+    def _find_state(self, time, node, sim_record):
         """Find a node's state at the given time."""
         state = []
         for state_component in self.state_components:
             if state_component == 'time':
                 state += [self.deadline - time -1]
             elif state_component == 'score':
-                current_fitness = \
-                        fitness_func[sim_record.positions[node, time]]
+                current_fitness = sim_record.fitness_func_norm[
+                    sim_record.positions[node, time]
+                ]
                 state += [
                     int(round(current_fitness * (self.quantisation_levels -1)))
                 ]
@@ -516,22 +449,12 @@ class QLearningAgent():
         with open(file_name, 'rb') as file_handle:
             self.q_table = np.load(file_handle)
 
-    def perform_greedy_action(
-            self,
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-    ):
+    def perform_greedy_action(self, time, node, sim_record, neighbours):
         """Performs the learned best action for a given state."""
         # find current state
         current_state = self._find_state(
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
         )
 
@@ -539,23 +462,14 @@ class QLearningAgent():
         action = self._choose_greedy_action(current_state)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
     def learn_all_rewards_and_perform_epsilon_greedy_action(
             self,
-            num_bits,
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
+            neighbours,
     ):
         """
         Learns from the previous time step
@@ -566,8 +480,6 @@ class QLearningAgent():
         current_state = self._find_state(
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
         )
 
@@ -576,12 +488,14 @@ class QLearningAgent():
             last_state = self._find_state(
                 time-1,
                 node,
-                neighbours,
-                fitness_func,
                 sim_record,
             )
-            reward = fitness_func[sim_record.positions[node, time]] \
-                    - fitness_func[sim_record.positions[node, time -1]]
+            current_fitness = \
+                sim_record.fitness_func[sim_record.positions[node, time]]
+            last_fitness = \
+                sim_record.fitness_func[sim_record.positions[node, time -1]]
+
+            reward = current_fitness - last_fitness
 
             self._update_q_table(
                 last_state,
@@ -594,24 +508,15 @@ class QLearningAgent():
         action = self._epsilon_greedy_choose_action(current_state)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
 
     def learn_end_reward_and_perform_epsilon_greedy_action(
             self,
-            num_bits,
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
+            neighbours,
     ):
         """
         Learns from the previous time step
@@ -622,8 +527,6 @@ class QLearningAgent():
         current_state = self._find_state(
             time,
             node,
-            neighbours,
-            fitness_func,
             sim_record,
         )
 
@@ -632,13 +535,12 @@ class QLearningAgent():
             last_state = self._find_state(
                 time-1,
                 node,
-                neighbours,
-                fitness_func,
                 sim_record,
             )
 
             if time == self.deadline -2:
-                reward = fitness_func[sim_record.positions[node, time]]
+                reward = \
+                    sim_record.fitness_func[sim_record.positions[node, time]]
             else:
                 reward = 0
 
@@ -653,14 +555,7 @@ class QLearningAgent():
         action = self._epsilon_greedy_choose_action(current_state)
 
         # perform action
-        ACTION_FUNC[action](
-            num_bits,
-            time,
-            node,
-            neighbours,
-            fitness_func,
-            sim_record,
-        )
+        ACTION_FUNC[action](time, node, sim_record, neighbours)
 
     def plot_q_table(self, axis, state_component_name, normalise=True):
         """

@@ -61,22 +61,16 @@ OUTCOME_NUM = {
 # Action Function
 ###############################################################################
 #
-def action_step(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_step(time, node, sim_record, neighbours):
     """Worker takes a random step, if it leads to a better position"""
     sim_record.actions[node, time+1] = ACTION_NUM['step']
 
     current_pos = sim_record.positions[node, time]
-    random_step_pos = bitm.flip_random_bit(num_bits, current_pos)
+    current_fitness = sim_record.fitness_func[current_pos]
+    random_step_pos = bitm.flip_random_bit(sim_record.num_bits, current_pos)
 
     # if better, take random step
-    if fitness_func[random_step_pos] > fitness_func[current_pos]:
+    if sim_record.fitness_func[random_step_pos] > current_fitness:
         sim_record.positions[node, time +1] = random_step_pos
         sim_record.outcomes[node, time+1] = OUTCOME_NUM['stepped']
         return True
@@ -89,22 +83,15 @@ def action_step(
 ACTION_FUNC[ACTION_NUM["step"]] = action_step
 
 
-def action_teleport(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_teleport(time, node, sim_record, neighbours):
     """Randomly teleports worker, if better than worker's current position"""
     sim_record.actions[node, time+1] = ACTION_NUM['teleport']
 
-    current_pos = sim_record.positions[node, time]
-    teleport_pos = random.randint(num_bits)
+    current_fitness = sim_record.fitness_func[sim_record.positions[node, time]]
+    teleport_pos = random.randint(sim_record.num_bits)
 
     # if better, randomly teleports
-    if fitness_func[teleport_pos] > fitness_func[current_pos]:
+    if sim_record.fitness_func[teleport_pos] > current_fitness:
         sim_record.positions[node, time +1] = teleport_pos
         sim_record.outcomes[node, time+1] = OUTCOME_NUM['teleported']
         return True
@@ -117,30 +104,23 @@ def action_teleport(
 ACTION_FUNC[ACTION_NUM["teleport"]] = action_teleport
 
 
-def action_best(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_best(time, node, sim_record, neighbours):
     """
     Worker copies their best colleague, if the colleague has a better position.
     """
     sim_record.actions[node, time+1] = ACTION_NUM['best']
 
     neighbour_fitnesses = [
-        fitness_func[sim_record.positions[neighbour, time]]
+        sim_record.fitness_func[sim_record.positions[neighbour, time]]
         for neighbour in neighbours
     ]
     best_neighbour_pos = \
         sim_record.positions[np.argmax(neighbour_fitnesses), time]
 
-    current_fitness = fitness_func[sim_record.positions[node, time]]
+    current_fitness = sim_record.fitness_func[sim_record.positions[node, time]]
 
     # if better, copy best neighbour
-    if fitness_func[best_neighbour_pos] > current_fitness:
+    if sim_record.fitness_func[best_neighbour_pos] > current_fitness:
         sim_record.positions[node, time +1] = best_neighbour_pos
         sim_record.outcomes[node, time+1] = OUTCOME_NUM['copied best']
         return True
@@ -153,14 +133,7 @@ def action_best(
 ACTION_FUNC[ACTION_NUM["best"]] = action_best
 
 
-def action_modal(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_modal(time, node, sim_record, neighbours):
     """
     If more than one colleague has the same fitness,
     the worker copies one of these colleagues.
@@ -168,7 +141,7 @@ def action_modal(
     sim_record.actions[node, time+1] = ACTION_NUM['modal']
 
     neighbour_fitnesses = [
-        fitness_func[sim_record.positions[neighbour, time]]
+        sim_record.fitness_func[sim_record.positions[neighbour, time]]
         for neighbour in neighbours
     ]
 
@@ -182,8 +155,10 @@ def action_modal(
             min_freq = value
             modal_fitness = key
 
+    current_fitness = sim_record.fitness_func[sim_record.positions[node, time]]
+
     # if better, copy a random modal neighbour
-    if modal_fitness > fitness_func[sim_record.positions[node, time]]:
+    if modal_fitness > current_fitness:
         modal_neighbour_idxs = \
                 np.where(neighbour_fitnesses == modal_fitness)[0]
         neighbour = neighbours[random.choice(modal_neighbour_idxs)]
@@ -201,14 +176,7 @@ def action_modal(
 ACTION_FUNC[ACTION_NUM["modal"]] = action_modal
 
 
-def action_best_then_step(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_best_then_step(time, node, sim_record, neighbours):
     """
     Find the neighbour with the best performance.
     If their performance is better, take their position.
@@ -218,24 +186,15 @@ def action_best_then_step(
     """
     sim_record.actions[node, time+1] = ACTION_NUM['best_then_step']
 
-    success = action_best(num_bits, time, node,
-                          neighbours, fitness_func, sim_record)
+    success = action_best(time, node, sim_record, neighbours)
     if not success:
-        success = action_step(num_bits, time, node,
-                              neighbours, fitness_func, sim_record)
+        success = action_step(time, node, sim_record, neighbours)
     return success
 
 ACTION_FUNC[ACTION_NUM["best_then_step"]] = action_best_then_step
 
 
-def action_step_then_best(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_step_then_best(time, node, sim_record, neighbours):
     """
     Check to see if the search position has better performance.
     If it does, take the search position.
@@ -245,24 +204,15 @@ def action_step_then_best(
     """
     sim_record.actions[node, time+1] = ACTION_NUM['step_then_best']
 
-    success = action_step(num_bits, time, node,
-                          neighbours, fitness_func, sim_record)
+    success = action_step(time, node, sim_record, neighbours)
     if not success:
-        success = action_best(num_bits, time, node,
-                              neighbours, fitness_func, sim_record)
+        success = action_best(time, node, sim_record, neighbours)
     return success
 
 ACTION_FUNC[ACTION_NUM["step_then_best"]] = action_step_then_best
 
 
-def action_modal_then_step(
-        num_bits,
-        time,
-        node,
-        neighbours,
-        fitness_func,
-        sim_record,
-):
+def action_modal_then_step(time, node, sim_record, neighbours):
     """
     Try to find a fitness_func occurring more than once among neighbours.
     If successful, take the position of one of these neighbours at random.
@@ -272,11 +222,9 @@ def action_modal_then_step(
     """
     sim_record.actions[node, time+1] = ACTION_NUM['modal_then_step']
 
-    success = action_modal(num_bits, time, node,
-                           neighbours, fitness_func, sim_record)
+    success = action_modal(time, node, sim_record, neighbours)
     if not success:
-        success = action_step(num_bits, time, node,
-                              neighbours, fitness_func, sim_record)
+        success = action_step(time, node, sim_record, neighbours)
     return success
 
 ACTION_FUNC[ACTION_NUM["modal_then_step"]] = action_modal_then_step

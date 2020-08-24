@@ -89,17 +89,23 @@ if __name__ == '__main__':
         sim_records[policy_name] = []
 
     for iteration in range(ITERATIONS):
-        fitness_func = nkl.generate_fitness_func(N, K, num_processes=3)
+        fitness_func, fitness_func_norm = \
+            nkl.generate_fitness_func(N, K, num_processes=3)
         for policy_name in policies:
-            sim_record = env.run_episode(
-                graph,
+            sim_record = env.SimulationRecord(
                 N,
+                NUM_NODES,
                 DEADLINE,
                 fitness_func,
+                fitness_func_norm,
+            )
+            env.run_episode(
+                graph,
+                sim_record,
                 policies[policy_name]["strategy"],
                 neighbour_sample_size=policies[policy_name]["sample"],
             )
-            sim_record.fill_fitnesses(fitness_func)
+            sim_record.fill_fitnesses()
             sim_records[policy_name].append(sim_record)
 
 
