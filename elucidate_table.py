@@ -16,7 +16,7 @@ def get_args():
         sys.exit(0)
 
     if len(sys.argv) > 2:
-        return load_agent_and_settings(sys.argv[1], episodes=int(sys.argv[2]))
+        return load_agent_and_settings(sys.argv[1], episodes=sys.argv[2])
 
     return load_agent_and_settings(sys.argv[1])
 
@@ -51,6 +51,6 @@ if __name__ == '__main__':
         agent.plot_q_table(axs[1], normalise=False)
         axs[1].legend()
 
-
     print(agent.q_table)
+
     plt.show()

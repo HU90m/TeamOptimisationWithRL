@@ -8,7 +8,7 @@ import nklandscapes as nkl
 import environment as env
 
 from actions import ACTION_NUM, ACTION_FUNC
-from agents import SimpleQLearningAgent, load_agent_and_settings
+import agents
 
 
 def line_and_error(axis, x_values, y_values, y_err, label, colour, alpha):
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     N, K = 12, 5
 
     NUM_NODES = 60
-    DEGREE = 4
+    DEGREE = 8
 
     DEADLINE = 50
     ITERATIONS = 50
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
 
 
-    randy = SimpleQLearningAgent(
+    randy = agents.QLearningAgent(
         DEADLINE,
         epsilon_decay=1e-6,
         random_initialisation=True,
@@ -49,15 +49,15 @@ if __name__ == '__main__':
     )
 
 
-    comp, _, _ = load_agent_and_settings('agent/comp/comp.json')
+    comp, _, _ = agents.load_agent_and_settings('agent/basic/basic.json')
 
     policies = {
-        #'conformity imitation then step' : {
-        #    "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
-        #    "sample" : None,
-        #    "colour" : "green",
-        #    "alpha" : 1,
-        #},
+        'conformity imitation then step' : {
+            "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
+            "sample" : None,
+            "colour" : "yellow",
+            "alpha" : 1,
+        },
         'best member imitation then step' : {
             "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
             "sample" : None,
