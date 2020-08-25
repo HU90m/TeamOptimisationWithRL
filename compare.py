@@ -31,7 +31,7 @@ if __name__ == '__main__':
     DEGREE = 8
 
     DEADLINE = 50
-    ITERATIONS = 50
+    ITERATIONS = 1000
 
     #graph = ig.Graph.Full(NUM_NODES)
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
@@ -49,7 +49,9 @@ if __name__ == '__main__':
     )
 
 
-    comp, _, _ = agents.load_agent_and_settings('agent/basic/basic.json')
+    comp1, _, _ = agents.load_agent_and_settings('agent/basic/basic.json', episodes=6100)
+
+    comp2, _, _ = agents.load_agent_and_settings('agent/basic/basic.json')
 
     policies = {
         'conformity imitation then step' : {
@@ -61,7 +63,7 @@ if __name__ == '__main__':
         'best member imitation then step' : {
             "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
             "sample" : None,
-            "colour" : "blue",
+            "colour" : "cyan",
             "alpha" : 1,
         },
         'step then best member imitation' : {
@@ -77,7 +79,13 @@ if __name__ == '__main__':
             "alpha" : 1,
         },
         'Q learning' : {
-            "strategy" : comp.perform_greedy_action,
+            "strategy" : comp1.perform_greedy_action,
+            "sample" : None,
+            "colour" : "blue",
+            "alpha" : 1,
+        },
+        'Q learning 2' : {
+            "strategy" : comp2.perform_greedy_action,
             "sample" : None,
             "colour" : "green",
             "alpha" : 1,
@@ -90,7 +98,7 @@ if __name__ == '__main__':
 
     for iteration in range(ITERATIONS):
         fitness_func, fitness_func_norm = \
-            nkl.generate_fitness_func(N, K, num_processes=3)
+            nkl.generate_fitness_func(N, K, num_processes=2)
         for policy_name in policies:
             sim_record = env.SimulationRecord(
                 N,
