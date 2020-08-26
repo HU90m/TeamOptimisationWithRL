@@ -24,14 +24,16 @@ def line_and_error(axis, x_values, y_values, y_err, label, colour, alpha):
 
 
 if __name__ == '__main__':
-    np.random.seed(23583148)
+    np.random.seed(8574058)
     N, K = 12, 5
 
     NUM_NODES = 60
     DEGREE = 8
 
     DEADLINE = 50
-    ITERATIONS = 1000
+    ITERATIONS = 2000
+
+    NUM_PROCESSES = 4
 
     #graph = ig.Graph.Full(NUM_NODES)
     graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
@@ -49,21 +51,20 @@ if __name__ == '__main__':
     )
 
 
-    comp1, _, _ = agents.load_agent_and_settings('agent/basic/basic.json', episodes=6100)
-
-    comp2, _, _ = agents.load_agent_and_settings('agent/basic/basic.json')
+    comp1, _, _ = agents.load_agent_and_settings('agent/basic3/basic3.json', episodes=3500)
+    comp2, _, _ = agents.load_agent_and_settings('agent/basic3/basic3.json')
 
     policies = {
         'conformity imitation then step' : {
             "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
             "sample" : None,
-            "colour" : "yellow",
+            "colour" : "purple",
             "alpha" : 1,
         },
         'best member imitation then step' : {
             "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
             "sample" : None,
-            "colour" : "cyan",
+            "colour" : "red",
             "alpha" : 1,
         },
         'step then best member imitation' : {
@@ -72,24 +73,25 @@ if __name__ == '__main__':
             "colour" : "orange",
             "alpha" : 1,
         },
-        'Random' : {
-            "strategy" : randy.perform_greedy_action,
-            "sample" : None,
-            "colour" : "purple",
-            "alpha" : 1,
-        },
-        'Q learning' : {
+        #'Random' : {
+        #    "strategy" : randy.perform_greedy_action,
+        #    "sample" : None,
+        #    "colour" : "purple",
+        #    "alpha" : 1,
+        #},
+        'Q learning Agent (3500 episodes)' : {
             "strategy" : comp1.perform_greedy_action,
             "sample" : None,
             "colour" : "blue",
             "alpha" : 1,
         },
-        'Q learning 2' : {
+    }
+
+    policies['Q learning Agent (10000 episodes)'] = {
             "strategy" : comp2.perform_greedy_action,
             "sample" : None,
             "colour" : "green",
             "alpha" : 1,
-        },
     }
 
     sim_records = {}
@@ -98,7 +100,7 @@ if __name__ == '__main__':
 
     for iteration in range(ITERATIONS):
         fitness_func, fitness_func_norm = \
-            nkl.generate_fitness_func(N, K, num_processes=2)
+            nkl.generate_fitness_func(N, K, num_processes=NUM_PROCESSES)
         for policy_name in policies:
             sim_record = env.SimulationRecord(
                 N,

@@ -1,5 +1,5 @@
 {
-    "name" : "basic",
+    "name" : "basic3",
     "deadline" : 50,
     "max training time" : 120,
     "episodes" : 10000,
@@ -16,13 +16,13 @@
         "type" : "QLearningAgent",
         "rewards" : "end",
         "epsilon decay" : 1e-7,
-        "learning rate" : 0.6,
+        "learning rate" : 0.01,
         "discount factor" : 0.99,
         "state components" : [
             "time",
             "score"
         ],
-        "quantisation levels" : 5,
+        "quantisation levels" : 20,
         "possible actions" : [
             "step",
             "best",
@@ -31,5 +31,5 @@
         "load table" : null
     },
     "seed" : 5821307,
-    "num processes" : 3
+    "num processes" : 4
 }

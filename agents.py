@@ -378,7 +378,7 @@ class QLearningAgent():
         self.state_dimensions = []
         for state_component in self.state_components:
             if state_component == 'time':
-                self.state_dimensions += [deadline]
+                self.state_dimensions += [deadline-1]
             elif state_component == 'score':
                 self.state_dimensions += [quantisation_levels]
 
@@ -389,21 +389,24 @@ class QLearningAgent():
             )
         else:
             self.q_table = np.zeros(
-                list(self.state_dimensions) + [len(possible_actions)],
+                self.state_dimensions + [len(possible_actions)],
             )
+
+        # the count of the number of times each state has been updated
+        self.update_count = np.zeros(self.state_dimensions)
 
     def _find_state(self, time, node, sim_record):
         """Find a node's state at the given time."""
         state = []
         for state_component in self.state_components:
             if state_component == 'time':
-                state += [self.deadline - time -1]
+                state += [time]
             elif state_component == 'score':
                 current_fitness = sim_record.fitness_func_norm[
                     sim_record.positions[node, time]
                 ]
                 state += [
-                    int(round(current_fitness * (self.quantisation_levels -1)))
+                    int(current_fitness * (self.quantisation_levels -1))
                 ]
         return tuple(state)
 
@@ -417,6 +420,7 @@ class QLearningAgent():
         td_delta = td_target - self.q_table[state][action_idx]
 
         self.q_table[state][action_idx] += self.learning_rate * td_delta
+        self.update_count[state] += 1
 
     def _choose_greedy_action(self, current_state):
         """
@@ -439,15 +443,17 @@ class QLearningAgent():
         self.epsilon -= self.epsilon_decay * self.epsilon
         return action
 
-    def save_q_table(self, file_name):
-        """Save the q_table with the given file name."""
+    def save_tables(self, file_name):
+        """Save the q_table and update_count with the given file name."""
         with open(file_name, 'wb') as file_handle:
-            np.save(file_handle, self.q_table)
+            np.savez(file_handle, q_table=self.q_table, update_count=self.update_count)
 
-    def load_q_table(self, file_name):
-        """Load a q_table with the given file name."""
+    def load_tables(self, file_name):
+        """Load a q_table and update_count with the given file name."""
         with open(file_name, 'rb') as file_handle:
-            self.q_table = np.load(file_handle)
+            file_content = np.load(file_handle)
+            self.q_table = file_content["q_table"]
+            self.update_count = file_content["update_count"]
 
     def perform_greedy_action(self, time, node, sim_record, neighbours):
         """Performs the learned best action for a given state."""
@@ -509,7 +515,6 @@ class QLearningAgent():
 
         # perform action
         ACTION_FUNC[action](time, node, sim_record, neighbours)
-
 
     def learn_end_reward_and_perform_epsilon_greedy_action(
             self,
@@ -647,19 +652,19 @@ def load_agent_and_settings(config_location, training=False, episodes=None):
     # load the appropriate q table
     if training:
         if config["agent"]["load table"]:
-            agent.load_q_table(
+            agent.load_tables(
                 path.join(config_dir, config["agent"]["load table"]),
             )
     else:
         name = config['name']
 
         if episodes:
-            agent.load_q_table(
-                path.join(config_dir, f'{name}-{episodes}.np'),
+            agent.load_tables(
+                path.join(config_dir, f'{name}-{episodes}.npz'),
             )
         else:
-            agent.load_q_table(
-                path.join(config_dir, f'{name}.np'),
+            agent.load_tables(
+                path.join(config_dir, f'{name}.npz'),
             )
 
     return agent, config, config_dir

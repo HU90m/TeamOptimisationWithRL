@@ -82,8 +82,8 @@ if __name__ == '__main__':
             if not config["agent"]["type"] == "SimpleMCAgent":
                 file_append(output_file, f'epsilon = {agent.epsilon}\n')
 
-            agent.save_q_table(
-                path.join(config_dir, f"{name}-{episode}.np"),
+            agent.save_tables(
+                path.join(config_dir, f"{name}-{episode}.npz"),
             )
 
         fitness_func, fitness_func_norm = nkl.generate_fitness_func(
@@ -112,4 +112,4 @@ if __name__ == '__main__':
     if not config["agent"]["type"] == "SimpleMCAgent":
         file_append(output_file, f'epsilon = {agent.epsilon}\n')
 
-    agent.save_q_table(path.join(config_dir, f"{name}.np"))
+    agent.save_tables(path.join(config_dir, f"{name}.npz"))
