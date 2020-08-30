@@ -2,26 +2,18 @@
 
 import sys
 from os import path
-
 from time import time
+import numpy as np
 import igraph as ig
 
 import nklandscapes as nkl
 import environment as env
-
 from agents import load_agent_and_settings
 
 
 def file_write(name, line):
     """Write the given line to the file with the given name."""
     file_handle = open(name, 'w')
-    file_handle.write(line)
-    file_handle.close()
-
-
-def file_append(name, line):
-    """Appends the given line to the file with the given name."""
-    file_handle = open(name, 'a')
     file_handle.write(line)
     file_handle.close()
 
@@ -40,30 +32,31 @@ def get_args():
 if __name__ == '__main__':
     config_file = get_args()
 
+
+    # load agent
     agent, config, config_dir = \
         load_agent_and_settings(config_file, training=True)
 
 
+    # seed random number generator
+    np.random.seed(config["seed"])
+
+
+    # generate graph
     if config["graph"]["type"] == "regular":
         graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
                                    config["graph"]["degree"])
+
     elif config["graph"]["type"] == "full":
         graph = ig.Graph.Full(config["graph"]["num_nodes"])
 
+
     # provide appropriate training function
-    if (config["agent"]["type"] == "QLearningAgent" or
-            config["agent"]["type"] == "SimpleQLearningAgent"):
+    if config["agent"]["rewards"] == "all":
+        action_function = agent.learn_using_all_rewards
 
-        if config["agent"]["rewards"] == "all":
-            action_function = \
-                agent.learn_all_rewards_and_perform_epsilon_greedy_action
-
-        elif config["agent"]["rewards"] == "end":
-            action_function = \
-                agent.learn_end_reward_and_perform_epsilon_greedy_action
-
-    elif config["agent"]["type"] == "SimpleMCAgent":
-        action_function = agent.learn_and_perform_random_action
+    elif config["agent"]["rewards"] == "end":
+        action_function = agent.learn_using_end_rewards
 
 
     # train agent
@@ -77,10 +70,8 @@ if __name__ == '__main__':
             mins_passed = (time() -t0)/60
             file_write(output_file,
                        f'episodes = {episode}\n'
-                       f'time = {mins_passed} minutes\n')
-
-            if not config["agent"]["type"] == "SimpleMCAgent":
-                file_append(output_file, f'epsilon = {agent.epsilon}\n')
+                       f'time = {mins_passed} minutes\n'
+                       f'epsilon = {agent.epsilon}\n')
 
             agent.save_tables(
                 path.join(config_dir, f"{name}-{episode}.npz"),
@@ -108,8 +99,7 @@ if __name__ == '__main__':
     mins_passed = (time() -t0)/60
     file_write(output_file,
                f'episodes = {episode}\n'
-               f'time = {mins_passed} minutes\n')
-    if not config["agent"]["type"] == "SimpleMCAgent":
-        file_append(output_file, f'epsilon = {agent.epsilon}\n')
+               f'time = {mins_passed} minutes\n'
+               f'epsilon = {agent.epsilon}\n')
 
     agent.save_tables(path.join(config_dir, f"{name}.npz"))

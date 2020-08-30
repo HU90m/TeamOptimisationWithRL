@@ -18,10 +18,6 @@
         "epsilon decay" : 1e-7,
         "learning rate" : 0.01,
         "discount factor" : 0.99,
-        "state components" : [
-            "time",
-            "score"
-        ],
         "quantisation levels" : 20,
         "possible actions" : [
             "step",

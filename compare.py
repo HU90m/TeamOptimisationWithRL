@@ -42,7 +42,6 @@ if __name__ == '__main__':
     randy = agents.QLearningAgent(
         DEADLINE,
         epsilon_decay=1e-6,
-        random_initialisation=True,
         possible_actions=(
             ACTION_NUM['step'],
             ACTION_NUM['best'],
