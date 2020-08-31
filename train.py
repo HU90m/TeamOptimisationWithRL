@@ -3,6 +3,7 @@
 import sys
 from os import path
 from time import time
+import random
 import numpy as np
 import igraph as ig
 
@@ -39,7 +40,8 @@ if __name__ == '__main__':
 
 
     # seed random number generator
-    np.random.seed(config["seed"])
+    random.seed(config["seed"])
+    np.random.seed(random.getrandbits(32))
 
 
     # generate graph

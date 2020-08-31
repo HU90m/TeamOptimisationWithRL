@@ -1,5 +1,6 @@
 """A script for comparing different policies."""
 
+import random
 import numpy as np
 import igraph as ig
 import matplotlib.pyplot as plt
@@ -24,7 +25,8 @@ def line_and_error(axis, x_values, y_values, y_err, label, colour, alpha):
 
 
 if __name__ == '__main__':
-    np.random.seed(8574058)
+    random.seed(8574058)
+    np.random.seed(random.getrandbits(32))
     N, K = 12, 5
 
     NUM_NODES = 60
