@@ -4,8 +4,8 @@ import sys
 from os import path
 from time import time
 import random
+import networkx as nx
 import numpy as np
-import igraph as ig
 
 import nklandscapes as nkl
 import environment as env
@@ -38,7 +38,6 @@ if __name__ == '__main__':
     agent, config, config_dir = \
         load_agent_and_settings(config_file, training=True)
 
-
     # seed random number generator
     random.seed(config["seed"])
     np.random.seed(random.getrandbits(32))
@@ -46,11 +45,12 @@ if __name__ == '__main__':
 
     # generate graph
     if config["graph"]["type"] == "regular":
-        graph = ig.Graph.K_Regular(config["graph"]["num_nodes"],
-                                   config["graph"]["degree"])
+        num_nodes = config["graph"]["num_nodes"]
+        degree = config["graph"]["degree"]
+        graph = nx.circulant_graph(num_nodes, range(degree//2 +1))
 
     elif config["graph"]["type"] == "full":
-        graph = ig.Graph.Full(config["graph"]["num_nodes"])
+        graph = nx.complete_graph(config["graph"]["num_nodes"])
 
 
     # provide appropriate training function

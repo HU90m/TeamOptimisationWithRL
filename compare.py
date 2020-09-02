@@ -1,8 +1,8 @@
 """A script for comparing different policies."""
 
 import random
+import networkx as nx
 import numpy as np
-import igraph as ig
 import matplotlib.pyplot as plt
 
 import nklandscapes as nkl
@@ -29,17 +29,21 @@ if __name__ == '__main__':
     np.random.seed(random.getrandbits(32))
     N, K = 12, 5
 
-    NUM_NODES = 60
-    DEGREE = 8
+    NUM_NODES = 40
+    DEGREE = 6
 
-    DEADLINE = 50
-    ITERATIONS = 2000
+    DRAW_GRAPH = False
+
+    DEADLINE = 40
+    ITERATIONS = 100
 
     NUM_PROCESSES = 4
 
-    #graph = ig.Graph.Full(NUM_NODES)
-    graph = ig.Graph.K_Regular(NUM_NODES, DEGREE)
+    graph = nx.circulant_graph(NUM_NODES, range(DEGREE//2 +1))
 
+    if DRAW_GRAPH:
+        nx.draw_circular(graph, node_size=10, width=0.5)
+        plt.show()
 
     randy = agents.QLearningAgent(
         DEADLINE,

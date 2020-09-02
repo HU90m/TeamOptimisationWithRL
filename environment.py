@@ -212,7 +212,7 @@ def run_episode(
 ):
     """A single episode of the simulation."""
 
-    num_nodes = graph.vcount()
+    num_nodes = len(graph)
 
     sim_record.set_random_initial_position()
 
