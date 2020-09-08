@@ -1,9 +1,13 @@
 """A script for comparing different policies."""
 
+import json
+import sys
+from os import path
 import random
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as pltcolours
 
 import nklandscapes as nkl
 import environment as env
@@ -24,134 +28,125 @@ def line_and_error(axis, x_values, y_values, y_err, label, colour, alpha):
               color=colour, alpha=alpha, linewidth=1)
 
 
-if __name__ == '__main__':
-    random.seed(8574058)
-    np.random.seed(random.getrandbits(32))
-    N, K = 12, 5
+def get_args():
+    """Loads the config file given in the arguments."""
+    if len(sys.argv) < 2:
+        print(
+            'Please provide a compare json file.\n'
+        )
+        sys.exit(0)
 
-    NUM_NODES = 40
-    DEGREE = 6
+    return sys.argv[1]
+
+
+if __name__ == '__main__':
+    config_location = get_args()
+    config_dir, _ = path.split(config_location)
+
+    with open(config_location, 'rb') as file_handle:
+        config = json.load(file_handle)
+
+    random.seed(config["seed"])
+    np.random.seed(random.getrandbits(32))
+
+    # generate graph
+    if config["graph"]["type"] == "regular":
+        num_nodes = config["graph"]["num_nodes"]
+        degree = config["graph"]["degree"]
+        graph = nx.circulant_graph(num_nodes, range(degree//2 +1))
+
+    elif config["graph"]["type"] == "full":
+        graph = nx.complete_graph(config["graph"]["num_nodes"])
 
     DRAW_GRAPH = False
-
-    DEADLINE = 40
-    ITERATIONS = 100
-
-    NUM_PROCESSES = 4
-
-    graph = nx.circulant_graph(NUM_NODES, range(DEGREE//2 +1))
-
     if DRAW_GRAPH:
         nx.draw_circular(graph, node_size=10, width=0.5)
         plt.show()
 
-    randy = agents.QLearningAgent(
-        DEADLINE,
-        epsilon_decay=1e-6,
-        possible_actions=(
-            ACTION_NUM['step'],
-            ACTION_NUM['best'],
-            ACTION_NUM['modal'],
-        )
-    )
+    # load strategies
+    strategies = {}
+    for strategy in config["strategies"]:
+        if strategy["type"] == "heuristic":
+            strategies[strategy["name"]] = {
+                "action function" : ACTION_FUNC[ACTION_NUM[
+                    strategy["action"]
+                ]],
+                "alpha" : strategy["alpha"],
+            }
+        elif strategy["type"] == "learnt":
+            agent, _, _ = agents.load_agent_and_settings(
+                path.join(config_dir, strategy["agent config"]),
+                episode=strategy["episode"],
+            )
+            strategies[strategy["name"]] = {
+                "action function" : agent.perform_greedy_action,
+                "alpha" : strategy["alpha"],
+            }
 
-
-    comp1, _, _ = agents.load_agent_and_settings('agent/basic3/basic3.json', episodes=3500)
-    comp2, _, _ = agents.load_agent_and_settings('agent/basic3/basic3.json')
-
-    policies = {
-        'conformity imitation then step' : {
-            "strategy" : ACTION_FUNC[ACTION_NUM['modal_then_step']],
-            "sample" : None,
-            "colour" : "purple",
-            "alpha" : 1,
-        },
-        'best member imitation then step' : {
-            "strategy" : ACTION_FUNC[ACTION_NUM['best_then_step']],
-            "sample" : None,
-            "colour" : "red",
-            "alpha" : 1,
-        },
-        'step then best member imitation' : {
-            "strategy" : ACTION_FUNC[ACTION_NUM['step_then_best']],
-            "sample" : None,
-            "colour" : "orange",
-            "alpha" : 1,
-        },
-        #'Random' : {
-        #    "strategy" : randy.perform_greedy_action,
-        #    "sample" : None,
-        #    "colour" : "purple",
-        #    "alpha" : 1,
-        #},
-        'Q learning Agent (3500 episodes)' : {
-            "strategy" : comp1.perform_greedy_action,
-            "sample" : None,
-            "colour" : "blue",
-            "alpha" : 1,
-        },
-    }
-
-    policies['Q learning Agent (10000 episodes)'] = {
-            "strategy" : comp2.perform_greedy_action,
-            "sample" : None,
-            "colour" : "green",
-            "alpha" : 1,
-    }
-
+    # run episodes
     sim_records = {}
-    for policy_name in policies:
-        sim_records[policy_name] = []
+    for strategy_name in strategies:
+        sim_records[strategy_name] = []
 
-    for iteration in range(ITERATIONS):
-        fitness_func, fitness_func_norm = \
-            nkl.generate_fitness_func(N, K, num_processes=NUM_PROCESSES)
-        for policy_name in policies:
+    for _ in range(config["episodes"]):
+        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+            config["nk landscape"]["N"],
+            config["nk landscape"]["K"],
+            num_processes=config["num processes"],
+        )
+        for strategy_name in strategies:
             sim_record = env.SimulationRecord(
-                N,
-                NUM_NODES,
-                DEADLINE,
+                config["nk landscape"]["N"],
+                config["graph"]["num_nodes"],
+                config["deadline"],
                 fitness_func,
                 fitness_func_norm,
             )
             env.run_episode(
                 graph,
                 sim_record,
-                policies[policy_name]["strategy"],
-                neighbour_sample_size=policies[policy_name]["sample"],
+                strategies[strategy_name]["action function"],
             )
             sim_record.fill_fitnesses()
-            sim_records[policy_name].append(sim_record)
+            sim_records[strategy_name].append(sim_record)
 
+
+
+    # plot fitness comparison over these episodes
+    colour_iterator = iter(pltcolours.TABLEAU_COLORS)
 
     fitnesses = {}
     fitness_means = {}
     fitness_95confidence = {}
-    for policy_name, policy_sim_records in sim_records.items():
-        fitnesses[policy_name] = np.empty((ITERATIONS, DEADLINE))
+    for strategy_name, strategy_sim_records in sim_records.items():
+        fitnesses[strategy_name] = \
+            np.empty((config["episodes"], config["deadline"]))
 
-        for iteration, sim_record in enumerate(policy_sim_records):
+        for episode, sim_record in enumerate(strategy_sim_records):
             # mean nodes
-            fitnesses[policy_name][iteration] = \
+            fitnesses[strategy_name][episode] = \
                     np.mean(sim_record.fitnesses, axis=0)
 
-        fitness_means[policy_name] = np.mean(fitnesses[policy_name], axis=0)
-        fitness_95confidence[policy_name] = 1.96 \
-                * np.std(fitnesses[policy_name], axis=0) / np.sqrt(ITERATIONS)
+        fitness_means[strategy_name] = \
+            np.mean(fitnesses[strategy_name], axis=0)
 
+        fitness_95confidence[strategy_name] = 1.96 \
+                * np.std(fitnesses[strategy_name], axis=0) \
+                / np.sqrt(config["episodes"])
 
         line_and_error(
             plt,
-            range(DEADLINE),
-            fitness_means[policy_name],
-            fitness_95confidence[policy_name],
-            policy_name,
-            policies[policy_name]["colour"],
-            policies[policy_name]["alpha"],
+            range(config["deadline"]),
+            fitness_means[strategy_name],
+            fitness_95confidence[strategy_name],
+            strategy_name,
+            next(colour_iterator),
+            strategies[strategy_name]["alpha"],
         )
 
     plt.xlabel("Time Step")
     plt.ylabel("Average Score")
+    plt.title(config["title"])
     plt.grid(True)
     plt.legend()
     plt.show()

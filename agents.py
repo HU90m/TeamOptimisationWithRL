@@ -199,7 +199,7 @@ class QLearningAgent():
 # Functions
 ###############################################################################
 #
-def load_agent_and_settings(config_location, training=False, episodes=None):
+def load_agent_and_settings(config_location, training=False, episode=None):
     """Constructs an agent according to it's configuration file"""
 
     config_dir, _ = path.split(config_location)
@@ -233,9 +233,9 @@ def load_agent_and_settings(config_location, training=False, episodes=None):
     else:
         name = config['name']
 
-        if episodes:
+        if episode:
             agent.load_tables(
-                path.join(config_dir, f'{name}-{episodes}.npz'),
+                path.join(config_dir, f'{name}-{episode}.npz'),
             )
         else:
             agent.load_tables(
