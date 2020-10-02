@@ -1,0 +1,37 @@
+{
+    "title" : "Comparison of heuristic strategies",
+    "deadline" : 40,
+    "episodes" : 100,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 12,
+        "K" : 6
+    },
+    "graph" : {
+        "num_nodes" : 40,
+        "type" : "regular",
+        "degree" : 6
+    },
+    "strategies" : [
+        {
+            "type" : "heuristic",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "heuristic",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "heuristic",
+            "name" : "conformity imitation then step",
+            "action" : "modal_then_step",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 5821307,
+    "num processes" : 4
+}

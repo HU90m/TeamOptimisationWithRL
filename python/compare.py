@@ -89,7 +89,7 @@ if __name__ == '__main__':
         sim_records[strategy_name] = []
 
     for _ in range(config["episodes"]):
-        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+        fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
             config["nk landscape"]["N"],
             config["nk landscape"]["K"],
         )
