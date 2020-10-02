@@ -1,0 +1,11 @@
+#!/bin/sh
+pylint --max-line-length=79 --disable=W0621,R0801,R0902,R0903,R0913,R0914 $@
+
+#  Ignored Checks
+# ----------------
+# W0621: redefined-outer-name
+# R0801: duplicate-code
+# R0902: too-many-instance-attributes
+# R0903: too-few-public-methods
+# R0913: too-many-arguments
+# R0914: too-many-locals
