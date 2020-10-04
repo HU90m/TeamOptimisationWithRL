@@ -79,7 +79,7 @@ if __name__ == '__main__':
                 episode=strategy["episode"],
             )
             strategies[strategy["name"]] = {
-                "action function" : agent.perform_greedy_action,
+                "action function" : agent.test,
                 "alpha" : strategy["alpha"],
             }
 

@@ -99,7 +99,7 @@ class QLearningAgent():
         self.epsilon -= self.epsilon_decay * self.epsilon
         return action
 
-    def perform_greedy_action(self, time, node, sim_record, neighbours):
+    def test(self, time, node, sim_record, neighbours):
         """Performs the learned best action for a given state."""
         # find current state
         current_state = self._find_state(time, node, sim_record)
@@ -110,39 +110,7 @@ class QLearningAgent():
         # perform action
         ACTION_FUNC[action](time, node, sim_record, neighbours)
 
-    def learn_using_all_rewards(self, time, node, sim_record, neighbours):
-        """
-        Learns from the previous time step
-        (with a reward given at each step)
-        and performs the epsilon greedy action for a given state.
-        """
-        # find current state
-        current_state = self._find_state(time, node, sim_record)
-
-        # if not first run learn from the last decision
-        if time > 1:
-            last_state = self._find_state(time-1, node, sim_record)
-            current_fitness = \
-                sim_record.fitness_func[sim_record.positions[node, time]]
-            last_fitness = \
-                sim_record.fitness_func[sim_record.positions[node, time -1]]
-
-            reward = current_fitness - last_fitness
-
-            self._update_q_table(
-                last_state,
-                sim_record.actions[node, time-1],
-                current_state,
-                reward,
-            )
-
-        # decide on next action
-        action = self._choose_epsilon_greedy_action(current_state)
-
-        # perform action
-        ACTION_FUNC[action](time, node, sim_record, neighbours)
-
-    def learn_using_end_rewards(self, time, node, sim_record, neighbours):
+    def train(self, time, node, sim_record, neighbours):
         """
         Learns from the previous time step
         (with a reward only given at the end)
@@ -174,7 +142,7 @@ class QLearningAgent():
         # perform action
         ACTION_FUNC[action](time, node, sim_record, neighbours)
 
-    def save_tables(self, file_name):
+    def save(self, file_name):
         """Save the q_table and update_count with the given file name."""
         with open(file_name, 'wb') as file_handle:
             np.savez(
@@ -183,7 +151,7 @@ class QLearningAgent():
                 update_count=self.update_count,
             )
 
-    def load_tables(self, file_name):
+    def load(self, file_name):
         """Load a q_table and update_count with the given file name."""
         with open(file_name, 'rb') as file_handle:
             file_content = np.load(file_handle)
@@ -193,6 +161,75 @@ class QLearningAgent():
     def get_possible_actions(self):
         """Returns possible actions as a list of their names."""
         return [ACTION_STR[action] for action in self.possible_actions]
+
+
+class PolicyGradientAgent():
+    """Agent which employs Reinforce Policy Gradient to make decisions."""
+    def __init__(
+            self,
+            deadline,
+            learning_rate=1e-13,
+            action_1=ACTION_NUM["best"],
+            action_2=ACTION_NUM["step"],
+    ):
+        self.deadline = deadline
+        self.learning_rate = learning_rate
+
+        self.w_0 = 0.5
+        self.w_1 = 0
+
+        self.action_1 = action_1
+        self.action_2 = action_2
+
+    def policy(self, time):
+        """Policy Function"""
+        return self.w_0 + (self.w_1 * time)
+
+    def train(self, time, node, sim_record, neighbours):
+        """Makes decisions and learns from them."""
+
+        policy = self.policy(time)
+
+        # perform action according to policy
+        if random.random() > policy:
+            ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
+        else:
+            ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
+
+        # if last state in episode learn
+        if time == self.deadline - 2:
+            reward = \
+                sim_record.fitness_func[sim_record.positions[node, time]]
+
+            self.w_0 += self.learning_rate * reward * (1 / policy)
+            self.w_1 += self.learning_rate * reward * (time / policy)
+
+    def test(self, time, node, sim_record, neighbours):
+        """Makes decisions but doesn't learn from them."""
+        if random.random() > self.policy(time):
+            ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
+        else:
+            ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
+
+    def save(self, file_name):
+        """Saves the agent's weights."""
+        with open(file_name, 'wb') as file_handle:
+            np.savez(
+                file_handle,
+                w_0=self.w_0,
+                w_1=self.w_1,
+            )
+
+    def load(self, file_name):
+        """Loads the agent's weights."""
+        with open(file_name, 'rb') as file_handle:
+            file_content = np.load(file_handle)
+
+            self.w_0 = float(file_content['w_0'])
+            self.w_1 = float(file_content['w_1'])
+
+    def plot(self):
+        return
 
 
 ###############################################################################
@@ -208,11 +245,12 @@ def load_agent_and_settings(config_location, training=False, episode=None):
         config = json.load(file_handle)
 
     # initialise agent
-    possible_actions = [
-        ACTION_NUM[possible_action]
-        for possible_action in config["agent"]["possible actions"]
-    ]
-    if config["agent"]["type"] == "QLearningAgent":
+    agent_type = config["agent"]["type"]
+    if agent_type == "QLearningAgent":
+        possible_actions = [
+            ACTION_NUM[possible_action]
+            for possible_action in config["agent"]["possible actions"]
+        ]
         agent = QLearningAgent(
             config["deadline"],
             epsilon_decay=config["agent"]["epsilon decay"],
@@ -221,24 +259,29 @@ def load_agent_and_settings(config_location, training=False, episode=None):
             discount_factor=config["agent"]["discount factor"],
             possible_actions=possible_actions,
         )
+    elif agent_type == "PolicyGradientAgent":
+        agent = PolicyGradientAgent(
+            config["deadline"],
+            learning_rate=config["agent"]["learning rate"],
+        )
     else:
-        raise ValueError("QLearningAgent is the only supported agent.")
+        raise ValueError(f"{agent_type} is not a supported agent.")
 
     # load the appropriate q table
     if training:
         if config["agent"]["load table"]:
-            agent.load_tables(
+            agent.load(
                 path.join(config_dir, config["agent"]["load table"]),
             )
     else:
         name = config['name']
 
         if episode:
-            agent.load_tables(
+            agent.load(
                 path.join(config_dir, f'{name}-{episode}.npz'),
             )
         else:
-            agent.load_tables(
+            agent.load(
                 path.join(config_dir, f'{name}.npz'),
             )
 

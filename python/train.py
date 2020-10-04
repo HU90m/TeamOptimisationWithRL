@@ -53,14 +53,6 @@ if __name__ == '__main__':
         graph = nx.complete_graph(config["graph"]["num_nodes"])
 
 
-    # provide appropriate training function
-    if config["agent"]["rewards"] == "all":
-        action_function = agent.learn_using_all_rewards
-
-    elif config["agent"]["rewards"] == "end":
-        action_function = agent.learn_using_end_rewards
-
-
     # train agent
     name = config['name']
     output_file = path.join(config_dir, f"{name}.txt")
@@ -72,17 +64,15 @@ if __name__ == '__main__':
             mins_passed = (time() -t0)/60
             file_write(output_file,
                        f'episodes = {episode}\n'
-                       f'time = {mins_passed} minutes\n'
-                       f'epsilon = {agent.epsilon}\n')
+                       f'time = {mins_passed} minutes\n')
 
-            agent.save_tables(
+            agent.save(
                 path.join(config_dir, f"{name}-{episode}.npz"),
             )
 
-        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+        fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
             config["nk landscape"]["N"],
             config["nk landscape"]["K"],
-            num_processes=config["num processes"],
         )
         sim_record = env.SimulationRecord(
             config["nk landscape"]["N"],
@@ -91,7 +81,7 @@ if __name__ == '__main__':
             fitness_func,
             fitness_func_norm,
         )
-        env.run_episode(graph, sim_record, action_function)
+        env.run_episode(graph, sim_record, agent.train)
 
         if time() - t0 > max_time:
             break
@@ -101,7 +91,6 @@ if __name__ == '__main__':
     mins_passed = (time() -t0)/60
     file_write(output_file,
                f'episodes = {episode}\n'
-               f'time = {mins_passed} minutes\n'
-               f'epsilon = {agent.epsilon}\n')
+               f'time = {mins_passed} minutes\n')
 
-    agent.save_tables(path.join(config_dir, f"{name}.npz"))
+    agent.save(path.join(config_dir, f"{name}.npz"))

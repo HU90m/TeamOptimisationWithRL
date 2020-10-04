@@ -1,0 +1,21 @@
+{
+    "name" : "linearpolicy",
+    "deadline" : 40,
+    "max training time" : 120,
+    "episodes" : 10000,
+    "nk landscape" : {
+        "N" : 12,
+        "K" : 6
+    },
+    "graph" : {
+        "num_nodes" : 40,
+        "type" : "regular",
+        "degree" : 6
+    },
+    "agent" : {
+        "type" : "PolicyGradientAgent",
+        "learning rate" : 0.001,
+        "load table" : null
+    },
+    "seed" : 68119077
+}
