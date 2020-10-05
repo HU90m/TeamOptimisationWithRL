@@ -169,17 +169,21 @@ class PolicyGradientAgent():
             self,
             deadline,
             learning_rate=1e-13,
+            baseline_learning_rate=0.05,
             action_1=ACTION_NUM["best"],
             action_2=ACTION_NUM["step"],
     ):
         self.deadline = deadline
-        self.learning_rate = learning_rate
+        self.lr = learning_rate
 
         self.w_0 = 0.5
         self.w_1 = 0
 
         self.action_1 = action_1
         self.action_2 = action_2
+
+        self.baseline = 0.5
+        self.blr = baseline_learning_rate
 
     def policy(self, time):
         """Policy Function"""
@@ -199,10 +203,15 @@ class PolicyGradientAgent():
         # if last state in episode learn
         if time == self.deadline - 2:
             reward = \
-                sim_record.fitness_func[sim_record.positions[node, time]]
+                sim_record.fitness_func[sim_record.positions[node, time]] \
+                - self.baseline
 
-            self.w_0 += self.learning_rate * reward * (1 / policy)
-            self.w_1 += self.learning_rate * reward * (time / policy)
+            self.baseline = \
+                    ((1 - self.blr) * self.baseline) \
+                    + (self.blr * reward)
+
+            self.w_0 += self.lr * reward * (1 / policy)
+            self.w_1 += self.lr * reward * (time / policy)
 
     def test(self, time, node, sim_record, neighbours):
         """Makes decisions but doesn't learn from them."""
@@ -218,6 +227,7 @@ class PolicyGradientAgent():
                 file_handle,
                 w_0=self.w_0,
                 w_1=self.w_1,
+                baseline=self.baseline,
             )
 
     def load(self, file_name):
@@ -227,6 +237,7 @@ class PolicyGradientAgent():
 
             self.w_0 = float(file_content['w_0'])
             self.w_1 = float(file_content['w_1'])
+            self.baseline = float(file_content['baseline'])
 
     def plot(self):
         return
