@@ -33,7 +33,6 @@ def get_args():
 if __name__ == '__main__':
     config_file = get_args()
 
-
     # load agent
     agent, config, config_dir = \
         load_agent_and_settings(config_file, training=True)

@@ -28,7 +28,7 @@
             "type" : "learnt",
             "name" : "linear policy",
             "agent config" : "../agent/linearpolicy/linearpolicy.json",
-            "episode" : null,
+            "episode" : 1800,
             "alpha" : 1
         },
         {

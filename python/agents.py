@@ -169,7 +169,7 @@ class PolicyGradientAgent():
             self,
             deadline,
             learning_rate=1e-13,
-            baseline_learning_rate=0.05,
+            baseline_learning_rate=0.01,
             action_1=ACTION_NUM["best"],
             action_2=ACTION_NUM["step"],
     ):
@@ -177,13 +177,15 @@ class PolicyGradientAgent():
         self.lr = learning_rate
 
         self.w_0 = 0.5
-        self.w_1 = 0
+        self.w_1 = 0.0
 
         self.action_1 = action_1
         self.action_2 = action_2
 
         self.baseline = 0.5
         self.blr = baseline_learning_rate
+
+        self.count = 0
 
     def policy(self, time):
         """Policy Function"""
@@ -192,7 +194,10 @@ class PolicyGradientAgent():
     def train(self, time, node, sim_record, neighbours):
         """Makes decisions and learns from them."""
 
-        policy = self.policy(time)
+        adj_time = time/self.deadline
+
+        policy = self.policy(adj_time)
+
 
         # perform action according to policy
         if random.random() > policy:
@@ -203,19 +208,27 @@ class PolicyGradientAgent():
         # if last state in episode learn
         if time == self.deadline - 2:
             reward = \
-                sim_record.fitness_func[sim_record.positions[node, time]] \
-                - self.baseline
+                sim_record.fitness_func[sim_record.positions[node, time]]
+
+            reward_baseline = reward - self.baseline
 
             self.baseline = \
                     ((1 - self.blr) * self.baseline) \
                     + (self.blr * reward)
 
-            self.w_0 += self.lr * reward * (1 / policy)
-            self.w_1 += self.lr * reward * (time / policy)
+            self.w_0 += self.lr * reward_baseline * (1 / policy)
+            self.w_1 += self.lr * reward_baseline * (adj_time / policy)
+
+            if not self.count % 2000:
+                print(f"{reward}\t{self.baseline}\t{reward_baseline}\t{self.w_0}\t{self.w_1}")
+
+            self.count += 1
 
     def test(self, time, node, sim_record, neighbours):
         """Makes decisions but doesn't learn from them."""
-        if random.random() > self.policy(time):
+        adj_time = time/self.deadline
+
+        if random.random() > self.policy(adj_time):
             ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
         else:
             ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
@@ -274,6 +287,7 @@ def load_agent_and_settings(config_location, training=False, episode=None):
         agent = PolicyGradientAgent(
             config["deadline"],
             learning_rate=config["agent"]["learning rate"],
+            baseline_learning_rate=config["agent"]["baseline learning rate"],
         )
     else:
         raise ValueError(f"{agent_type} is not a supported agent.")
