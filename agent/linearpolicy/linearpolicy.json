@@ -4,7 +4,7 @@
     "max training time" : 120,
     "episodes" : 10000,
     "nk landscape" : {
-        "N" : 14,
+        "N" : 12,
         "K" : 4
     },
     "graph" : {
@@ -18,5 +18,7 @@
         "baseline learning rate" : 0.01,
         "load table" : null
     },
-    "seed" : 68119077
+    "seed" : 68119077,
+    "use rust": false,
+    "max processes": 4
 }

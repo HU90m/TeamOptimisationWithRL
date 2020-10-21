@@ -186,6 +186,8 @@ class PolicyGradientAgent():
         self.blr = baseline_learning_rate
 
         self.count = 0
+        self.count_a_1 = 0
+        self.count_a_2 = 0
 
     def policy(self, time):
         """Policy Function"""
@@ -194,13 +196,10 @@ class PolicyGradientAgent():
     def train(self, time, node, sim_record, neighbours):
         """Makes decisions and learns from them."""
 
-        adj_time = time/self.deadline
-
-        policy = self.policy(adj_time)
-
+        policy = self.policy(time)
 
         # perform action according to policy
-        if random.random() > policy:
+        if random.random() < policy:
             ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
         else:
             ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
@@ -216,11 +215,21 @@ class PolicyGradientAgent():
                     ((1 - self.blr) * self.baseline) \
                     + (self.blr * reward)
 
-            self.w_0 += self.lr * reward_baseline * (1 / policy)
-            self.w_1 += self.lr * reward_baseline * (adj_time / policy)
+            for t in range(1, self.deadline -1):
+                if sim_record.actions[node, t] == self.action_1:
+                    # increase probability of action 1 by reward
+                    self.w_0 += self.lr * reward_baseline * (1 / self.policy(t))
+                    self.w_1 += self.lr * reward_baseline * (t / self.policy(t))
+                    self.count_a_1 += 1
+                else:
+                    # increase probability of action 2 by reward
+                    self.w_0 -= self.lr * reward_baseline * (1 / self.policy(t))
+                    self.w_1 -= self.lr * reward_baseline * (t / self.policy(t))
+                    self.count_a_2 += 1
+
 
             if not self.count % 2000:
-                print(f"{reward}\t{self.baseline}\t{reward_baseline}\t{self.w_0}\t{self.w_1}")
+                print(f"{self.count}\t{self.count_a_1}\t{self.count_a_2}\t{reward}\t{self.baseline}\t{reward_baseline}\t{self.w_0}\t{self.w_1}")
 
             self.count += 1
 
@@ -228,7 +237,7 @@ class PolicyGradientAgent():
         """Makes decisions but doesn't learn from them."""
         adj_time = time/self.deadline
 
-        if random.random() > self.policy(adj_time):
+        if random.random() < self.policy(adj_time):
             ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
         else:
             ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
@@ -252,8 +261,123 @@ class PolicyGradientAgent():
             self.w_1 = float(file_content['w_1'])
             self.baseline = float(file_content['baseline'])
 
-    def plot(self):
-        return
+
+class ActorCriticAgent():
+    """
+    Agent which employs Actor-Critic Policy Gradient to make decisions.
+    """
+    def __init__(
+            self,
+            deadline,
+            learning_rate=1e-13,
+            baseline_learning_rate=0.01,
+            action_1=ACTION_NUM["best"],
+            action_2=ACTION_NUM["step"],
+    ):
+        self.deadline = deadline
+        self.lr = learning_rate
+
+        # policy parameters
+        self.w_0 = 0.5
+        self.w_1 = 0.0
+        self.w_2 = 0.0
+        self.w_3 = 0.0
+
+        # value parameters
+        self.v_0 = 0.5
+        self.v_1 = 0.0
+        self.v_2 = 0.0
+        self.v_3 = 0.0
+
+        self.vlr = value_learning_rate
+
+        self.action_1 = action_1
+        self.action_2 = action_2
+
+        self.count = 0
+
+    def value(self, time, score):
+        """Value Function"""
+        return self.v_0 \
+                + (self.v_1 * time) \
+                + (self.v_2 * score) \
+                + (self.v_3 * time * score)
+
+    def policy(self, time, score):
+        """Policy Function"""
+        return self.w_0 \
+                + (self.w_1 * time) \
+                + (self.w_2 * score) \
+                + (self.w_3 * time * score)
+
+    def train(self, time, node, sim_record, neighbours):
+        """Makes decisions and learns from them."""
+
+        adj_time = time/self.deadline # adjusted time
+        score = sim_record.fitness_func_norm[sim_record.positions[node, time]]
+
+        policy = self.policy(adj_time, score)
+
+
+        # perform action according to policy
+        if random.random() > policy:
+            ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
+        else:
+            ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
+
+        # if last state in episode learn
+        if time == self.deadline - 2:
+            reward = \
+                sim_record.fitness_func[sim_record.positions[node, time]]
+
+            reward_baseline = reward - self.value(adj_time, score)
+
+            self.baseline = \
+                    ((1 - self.blr) * self.baseline) \
+                    + (self.blr * reward)
+
+            self.w_0 += self.lr * reward_baseline * (1 / policy)
+            self.w_1 += self.lr * reward_baseline * (adj_time / policy)
+            self.w_2 += self.lr * reward_baseline * (score / policy)
+            self.w_3 += self.lr * reward_baseline * (score * adj_time / policy)
+
+            if not self.count % 2000:
+                print(f"{reward}\t{self.baseline}\t{reward_baseline}\t{self.w_0}\t{self.w_1}")
+
+            self.count += 1
+
+    def test(self, time, node, sim_record, neighbours):
+        """Makes decisions but doesn't learn from them."""
+        adj_time = time/self.deadline
+        score = sim_record.fitness_func_norm[sim_record.positions[node, time]]
+
+        if random.random() > self.policy(adj_time, score):
+            ACTION_FUNC[self.action_1](time, node, sim_record, neighbours)
+        else:
+            ACTION_FUNC[self.action_2](time, node, sim_record, neighbours)
+
+    def save(self, file_name):
+        """Saves the agent's weights."""
+        with open(file_name, 'wb') as file_handle:
+            np.savez(
+                file_handle,
+                w_0=self.w_0,
+                w_1=self.w_1,
+                w_2=self.w_2,
+                w_3=self.w_3,
+                baseline=self.baseline,
+            )
+
+    def load(self, file_name):
+        """Loads the agent's weights."""
+        with open(file_name, 'rb') as file_handle:
+            file_content = np.load(file_handle)
+
+            self.w_0 = float(file_content['w_0'])
+            self.w_1 = float(file_content['w_1'])
+            self.w_2 = float(file_content['w_2'])
+            self.w_3 = float(file_content['w_3'])
+            self.baseline = float(file_content['baseline'])
 
 
 ###############################################################################

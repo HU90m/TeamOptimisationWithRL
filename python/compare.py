@@ -89,10 +89,18 @@ if __name__ == '__main__':
         sim_records[strategy_name] = []
 
     for _ in range(config["episodes"]):
-        fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
-            config["nk landscape"]["N"],
-            config["nk landscape"]["K"],
-        )
+        if config["use rust"]:
+            fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
+                config["nk landscape"]["N"],
+                config["nk landscape"]["K"],
+            )
+        else:
+            fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+                config["nk landscape"]["N"],
+                config["nk landscape"]["K"],
+                num_processes=config["max processes"],
+            )
+
         for strategy_name in strategies:
             sim_record = env.SimulationRecord(
                 config["nk landscape"]["N"],

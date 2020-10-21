@@ -11,7 +11,6 @@ import nklandscapes as nkl
 import environment as env
 from agents import load_agent_and_settings
 
-
 def file_write(name, line):
     """Write the given line to the file with the given name."""
     file_handle = open(name, 'w')
@@ -69,10 +68,18 @@ if __name__ == '__main__':
                 path.join(config_dir, f"{name}-{episode}.npz"),
             )
 
-        fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
-            config["nk landscape"]["N"],
-            config["nk landscape"]["K"],
-        )
+        if config["use rust"]:
+            fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
+                config["nk landscape"]["N"],
+                config["nk landscape"]["K"],
+            )
+        else:
+            fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+                config["nk landscape"]["N"],
+                config["nk landscape"]["K"],
+                num_processes=config["max processes"],
+            )
+
         sim_record = env.SimulationRecord(
             config["nk landscape"]["N"],
             config["graph"]["num_nodes"],

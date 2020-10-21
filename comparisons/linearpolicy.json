@@ -4,7 +4,7 @@
     "episodes" : 100,
     "nk landscape" : {
         "N" : 12,
-        "K" : 6
+        "K" : 4
     },
     "graph" : {
         "num_nodes" : 40,
@@ -28,7 +28,7 @@
             "type" : "learnt",
             "name" : "linear policy",
             "agent config" : "../agent/linearpolicy/linearpolicy.json",
-            "episode" : 1800,
+            "episode" : 6200,
             "alpha" : 1
         },
         {
@@ -40,6 +40,7 @@
         }
     ],
     "seed" : 5821307,
-    "num processes" : 4,
+    "use rust": true,
+    "max processes" : 4,
     "95confidence": true
 }
