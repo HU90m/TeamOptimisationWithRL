@@ -1,4 +1,4 @@
-"""A script for training a Q Learning Agent."""
+"""A script for training a Agents."""
 
 import sys
 from os import path

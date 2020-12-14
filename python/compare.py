@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 * np.std(fitnesses[strategy_name], axis=0) \
                 / np.sqrt(config["episodes"])
 
-        if config["95confidence"] == True:
+        if config["95confidence"]:
             line_and_error(
                 plt,
                 range(config["deadline"]),

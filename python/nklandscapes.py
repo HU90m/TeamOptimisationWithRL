@@ -146,6 +146,11 @@ def rusty_generate_fitness_func(
             "nklandscapegen", "target", "release", "nklandscapegen",
         ),
 ):
+    """
+    Returns a list of the fitness function's output
+    for each of the 2^N possible solutions
+    using nklandscapes rust binary for generation.
+    """
     seed = np.random.randint(1<<64 -1)
 
     exit_code = os.system(f"{generator_location} "
@@ -153,8 +158,8 @@ def rusty_generate_fitness_func(
     if exit_code:
         raise RuntimeError(f"nklandscapegen exited with code {exit_code}")
 
-    with open("fit_func", "rb") as fh:
-        content = fh.read((1<<num_bits)*8)
+    with open("fit_func", "rb") as file_handle:
+        content = file_handle.read((1<<num_bits)*8)
 
     # unpack little endian doubles
     fitness_func_norm = np.array(unpack(f"<{1<<num_bits}d", content))

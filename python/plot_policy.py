@@ -1,4 +1,4 @@
-
+"""Plotting simple linear policies with time as only state."""
 import sys
 import numpy as np
 import matplotlib.pyplot as plt

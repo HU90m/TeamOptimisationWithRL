@@ -140,7 +140,7 @@ def get_args():
         sys.exit(0)
 
     if len(sys.argv) > 2:
-        return load_agent_and_settings(sys.argv[1], episodes=sys.argv[2])
+        return load_agent_and_settings(sys.argv[1], episode=sys.argv[2])
 
     return load_agent_and_settings(sys.argv[1])
 
