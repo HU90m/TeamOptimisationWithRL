@@ -1,0 +1,18 @@
+[package]
+name = "rustylandscapes"
+version = "0.1.0"
+authors = ["Hugo McNally <hugo.mcnally@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "rustylandscapes"
+crate-type = ["cdylib"]
+
+[dependencies]
+numpy = "0.13"
+ndarray = "0.14"
+rand = "0.8.0"
+
+[dependencies.pyo3]
+version = "0.13"
+features = ["extension-module"]

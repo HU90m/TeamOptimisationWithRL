@@ -9,6 +9,8 @@ import numpy as np
 
 from bitmanipulation import get_bit, set_bit
 
+import rustylandscapes as rusty
+
 
 
 def generate_interaction_lists(num_bits, num_components):
@@ -169,29 +171,44 @@ def rusty_generate_fitness_func(
 if __name__ == '__main__':
     from time import time
 
-    N, K = 15, 5
+    test_seed = 24
 
-    np.random.seed(42)
+    N, K = 16, 6
+
+    np.random.seed(test_seed)
     t0 = time()
     fitnesses1 = generate_fitness_func(N, K, num_processes=4)
     t1 = time()
 
-    np.random.seed(42)
+    np.random.seed(test_seed)
     t2 = time()
     fitnesses2 = generate_fitness_func(N, K)
     t3 = time()
 
-    np.random.seed(42)
+    np.random.seed(test_seed)
     t4 = time()
     fitnesses3 = rusty_generate_fitness_func(N, K)
     t5 = time()
 
-    np.random.seed(42)
-    fitnesses4 = rusty_generate_fitness_func(N, K)
+    np.random.seed(test_seed)
+    t6 = time()
+    seed = np.random.randint(1<<64 -1)
+    fitnesses4 = rusty.generate_nklandscape(N, K, seed)
+    t7 = time()
 
-    assert np.array_equal(fitnesses1, fitnesses2)
-    assert np.array_equal(fitnesses3, fitnesses4)
 
     print(f'num_processes=4: {t1-t0}s')
     print(f'num_processes=1: {t3-t2}s')
     print(f'rusty: {t5-t4}s')
+    print(f'rusty lib: {t7-t6}s')
+
+    np.random.seed(test_seed)
+    fitnesses5 = rusty_generate_fitness_func(N, K)
+
+    np.random.seed(test_seed)
+    seed = np.random.randint(1<<64 -1)
+    fitnesses6 = rusty.generate_nklandscape(N, K, seed)
+
+    assert np.array_equal(fitnesses1, fitnesses2)# check python funcs consitent
+    assert np.array_equal(fitnesses3, fitnesses5)# check rust bin consitent
+    assert np.array_equal(fitnesses4, fitnesses6)# check rust lib consistent
