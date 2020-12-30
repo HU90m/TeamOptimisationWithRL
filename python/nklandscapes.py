@@ -1,16 +1,10 @@
-"""A modules for generating NK Landscapes."""
+"""A module for generating NK Landscapes."""
 
 from multiprocessing import sharedctypes
-from struct import unpack
-
-import os
 import multiprocessing as mp
 import numpy as np
 
 from bitmanipulation import get_bit, set_bit
-
-import rustylandscapes as rusty
-
 
 
 def generate_interaction_lists(num_bits, num_components):
@@ -72,7 +66,7 @@ def find_solution_fitnesses(
         fitness_func[solution] = sum_of_component_functions / num_bits
 
 
-def generate_fitness_func(
+def generate_fitness_func_py(
         num_bits,
         num_components,
         num_processes=1,
@@ -140,75 +134,63 @@ def generate_fitness_func(
 
     return fitness_func_norm**8, fitness_func_norm
 
-def rusty_generate_fitness_func(
-        num_bits,
-        num_components,
-        generator_location=os.path.join(
-            os.path.dirname(__file__), "..",
-            "nklandscapegen", "target", "release", "nklandscapegen",
-        ),
-):
-    """
-    Returns a list of the fitness function's output
-    for each of the 2^N possible solutions
-    using nklandscapes rust binary for generation.
-    """
-    seed = np.random.randint(1<<64 -1)
 
-    exit_code = os.system(f"{generator_location} "
-                          f"{num_bits} {num_components} {seed} fit_func")
-    if exit_code:
-        raise RuntimeError(f"nklandscapegen exited with code {exit_code}")
+try:
+    import rustylandscapes as rusty
 
-    with open("fit_func", "rb") as file_handle:
-        content = file_handle.read((1<<num_bits)*8)
+    def generate_fitness_func_rust(
+            num_bits,
+            num_components,
+            num_processes=None,
+    ):
+        """Generates a fitness func
+        Provides the same interface as the generate fitness func written in
+        python, but using the rust implementation.
+        """
+        return rusty.generate_fitness_func(
+                num_bits, num_components, np.random.randint(1<<64, dtype='u8'),
+        )
 
-    # unpack little endian doubles
-    fitness_func_norm = np.array(unpack(f"<{1<<num_bits}d", content))
+    # if the rust version is available make it the default
+    generate_fitness_func = generate_fitness_func_rust
 
-    return fitness_func_norm**8, fitness_func_norm
+except ModuleNotFoundError:
+    generate_fitness_func = generate_fitness_func_py
+
+
 
 if __name__ == '__main__':
     from time import time
 
-    test_seed = 24
+    TEST_SEED = 42
 
-    N, K = 16, 6
+    num_bits, num_components = 15, 7 # (N, K) of the NK landscape
 
-    np.random.seed(test_seed)
+    np.random.seed(TEST_SEED)
     t0 = time()
-    fitnesses1 = generate_fitness_func(N, K, num_processes=4)
+    fitnesses1 = generate_fitness_func_py(
+            num_bits, num_components, num_processes=4
+    )
     t1 = time()
 
-    np.random.seed(test_seed)
+    np.random.seed(TEST_SEED)
     t2 = time()
-    fitnesses2 = generate_fitness_func(N, K)
+    fitnesses2 = generate_fitness_func_py(num_bits, num_components)
     t3 = time()
 
-    np.random.seed(test_seed)
+    np.random.seed(TEST_SEED)
     t4 = time()
-    fitnesses3 = rusty_generate_fitness_func(N, K)
+    fitnesses3 = generate_fitness_func_rust(num_bits, num_components)
     t5 = time()
 
-    np.random.seed(test_seed)
-    t6 = time()
-    seed = np.random.randint(1<<64 -1)
-    fitnesses4 = rusty.generate_nklandscape(N, K, seed)
-    t7 = time()
 
+    print(f'python (num_processes=4): {t1-t0}s')
+    print(f'python (num_processes=1): {t3-t2}s')
+    print(f'rust: {t5-t4}s')
 
-    print(f'num_processes=4: {t1-t0}s')
-    print(f'num_processes=1: {t3-t2}s')
-    print(f'rusty: {t5-t4}s')
-    print(f'rusty lib: {t7-t6}s')
+    np.random.seed(TEST_SEED)
+    fitnesses4 = generate_fitness_func_rust(num_bits, num_components)
 
-    np.random.seed(test_seed)
-    fitnesses5 = rusty_generate_fitness_func(N, K)
-
-    np.random.seed(test_seed)
-    seed = np.random.randint(1<<64 -1)
-    fitnesses6 = rusty.generate_nklandscape(N, K, seed)
-
-    assert np.array_equal(fitnesses1, fitnesses2)# check python funcs consitent
-    assert np.array_equal(fitnesses3, fitnesses5)# check rust bin consitent
-    assert np.array_equal(fitnesses4, fitnesses6)# check rust lib consistent
+    # check deterministic
+    assert np.array_equal(fitnesses1, fitnesses2)
+    assert np.array_equal(fitnesses3, fitnesses4)

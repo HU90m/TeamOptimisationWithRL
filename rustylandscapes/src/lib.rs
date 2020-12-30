@@ -104,8 +104,8 @@ fn monotonic_fn_pow8(fitness_func: &Vec<f64>) -> Vec<f64> {
 #[pymodule]
 fn rustylandscapes(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
 
-    #[pyfn(m, "generate_nklandscape")]
-    fn generate_nklandscape_py<'py>(
+    #[pyfn(m, "generate_fitness_func")]
+    fn generate_fitness_func_py<'py>(
         py: Python<'py>, num_bits: usize, num_components: usize, seed: u64
     ) -> (&PyArray<f64, Dim<[usize; 1]>>, &PyArray<f64, Dim<[usize; 1]>>) {
         let fitness_func = generate_nklanscape(

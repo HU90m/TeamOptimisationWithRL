@@ -33,5 +33,5 @@
         }
     ],
     "seed" : 5821307,
-    "num processes" : 4
+    "max processes" : 4
 }

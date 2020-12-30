@@ -55,10 +55,12 @@ if __name__ == '__main__':
     name = config['name']
     output_file = path.join(config_dir, f"{name}.txt")
     max_time = config["max training time"] * 60
+    save_interval = config["save_interval"]
     t0 = time()
 
+
     for episode in range(config["episodes"]):
-        if not episode % 100:
+        if not episode % save_interval:
             mins_passed = (time() -t0)/60
             file_write(output_file,
                        f'episodes = {episode}\n'
@@ -68,17 +70,11 @@ if __name__ == '__main__':
                 path.join(config_dir, f"{name}-{episode}.npz"),
             )
 
-        if config["use rust"]:
-            fitness_func, fitness_func_norm = nkl.rusty_generate_fitness_func(
-                config["nk landscape"]["N"],
-                config["nk landscape"]["K"],
-            )
-        else:
-            fitness_func, fitness_func_norm = nkl.generate_fitness_func(
-                config["nk landscape"]["N"],
-                config["nk landscape"]["K"],
-                num_processes=config["max processes"],
-            )
+        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+            config["nk landscape"]["N"],
+            config["nk landscape"]["K"],
+            num_processes=config["max processes"],
+        )
 
         sim_record = env.SimulationRecord(
             config["nk landscape"]["N"],

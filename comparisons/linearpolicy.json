@@ -40,7 +40,6 @@
         }
     ],
     "seed" : 5821307,
-    "use rust": true,
     "max processes" : 4,
     "95confidence": true
 }

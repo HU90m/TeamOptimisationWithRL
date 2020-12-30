@@ -19,6 +19,5 @@
         "load table" : null
     },
     "seed" : 68119077,
-    "use rust": false,
     "max processes": 4
 }
