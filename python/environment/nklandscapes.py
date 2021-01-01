@@ -4,7 +4,7 @@ from multiprocessing import sharedctypes
 import multiprocessing as mp
 import numpy as np
 
-from bitmanipulation import get_bit, set_bit
+from environment.bitmanipulation import get_bit, set_bit
 
 
 def generate_interaction_lists(num_bits, num_components):

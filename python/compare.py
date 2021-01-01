@@ -9,10 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltcolours
 
-import nklandscapes as nkl
-import environment as env
+from environment import Environment, get_action_num
 
-from actions import ACTION_NUM, ACTION_FUNC
 import agents
 
 
@@ -68,9 +66,8 @@ if __name__ == '__main__':
     for strategy in config["strategies"]:
         if strategy["type"] == "heuristic":
             strategies[strategy["name"]] = {
-                "action function" : ACTION_FUNC[ACTION_NUM[
-                    strategy["action"]
-                ]],
+                "action num" : get_action_num(strategy["action"]),
+                "type" : "constant",
                 "alpha" : strategy["alpha"],
             }
         elif strategy["type"] == "learnt":
@@ -83,61 +80,63 @@ if __name__ == '__main__':
                 "alpha" : strategy["alpha"],
             }
 
-    # run episodes
-    sim_records = {}
-    for strategy_name in strategies:
-        sim_records[strategy_name] = []
-
-    for _ in range(config["episodes"]):
-        fitness_func, fitness_func_norm = nkl.generate_fitness_func(
+    # the environment
+    environment = Environment(
             config["nk landscape"]["N"],
             config["nk landscape"]["K"],
-            num_processes=config["max processes"],
-        )
+            graph,
+            config["deadline"],
+            max_processes=config["max processes"],
+    )
 
-        for strategy_name in strategies:
-            sim_record = env.SimulationRecord(
-                config["nk landscape"]["N"],
-                config["graph"]["num_nodes"],
-                config["deadline"],
-                fitness_func,
-                fitness_func_norm,
-            )
-            env.run_episode(
-                graph,
-                sim_record,
-                strategies[strategy_name]["action function"],
-            )
-            sim_record.fill_fitnesses()
-            sim_records[strategy_name].append(sim_record)
+    # fitnesses holds the mean fitness across all nodes at each time step
+    # for each strategy and episode run.
+    fitnesses = {}
+    for strategy_name in strategies:
+        fitnesses[strategy_name] = []
 
+    for _ in range(config["episodes"]):
+        environment.generate_new_fitness_func()
+
+        for strategy_name, strategy in strategies.items():
+            environment.reset()
+
+            if strategy["type"] == "constant":
+                # if a constant action strategy, set all action to
+                # the constant action and run the full episode.
+                environment.set_all_actions(strategy["action num"])
+                environment.run_episode()
+
+            elif strategy["type"] == "learnt":
+
+                for time in range(config["deadline"]):
+                    for node in range(config["graph"]["num_nodes"]):
+                        environment.set_action(node, time, 1)
+
+                    environment.run_time_step(time)
+
+            fitnesses[strategy_name].append(environment.get_mean_fitnesses())
 
     # plot fitness comparison over these episodes
     colour_iterator = iter(pltcolours.TABLEAU_COLORS)
 
-    fitnesses = {}
     fitness_means = {}
     fitness_95confidence = {}
-    for strategy_name, strategy_sim_records in sim_records.items():
-        fitnesses[strategy_name] = \
-            np.empty((config["episodes"], config["deadline"]))
-
-        for episode, sim_record in enumerate(strategy_sim_records):
-            # mean nodes
-            fitnesses[strategy_name][episode] = \
-                    np.mean(sim_record.fitnesses, axis=0)
+    for strategy_name in fitnesses:
+        # concatonate the list of numpy arrays into a two 2D numpy array
+        fitnesses[strategy_name] = np.column_stack(fitnesses[strategy_name])
 
         fitness_means[strategy_name] = \
-            np.mean(fitnesses[strategy_name], axis=0)
+            np.mean(fitnesses[strategy_name], axis=1)
 
         fitness_95confidence[strategy_name] = 1.96 \
-                * np.std(fitnesses[strategy_name], axis=0) \
+                * np.std(fitnesses[strategy_name], axis=1) \
                 / np.sqrt(config["episodes"])
 
         if config["95confidence"]:
             line_and_error(
                 plt,
-                range(config["deadline"]),
+                range(config["deadline"] +1),
                 fitness_means[strategy_name],
                 fitness_95confidence[strategy_name],
                 strategy_name,
@@ -146,7 +145,7 @@ if __name__ == '__main__':
             )
         else:
             plt.plot(
-                range(config["deadline"]),
+                range(config["deadline"] +1),
                 fitness_means[strategy_name],
                 label=strategy_name,
                 color=next(colour_iterator),
