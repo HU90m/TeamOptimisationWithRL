@@ -75,6 +75,12 @@ class Environment():
         for node in range(self.num_nodes):
             self._positions[node, 0] = random.randint(2**self.num_bits)
 
+    def get_node_action(self, node, time):
+        """Returns the action taken or to be taken by the given node at the
+        given time.
+        """
+        return self._actions[node, time]
+
     def get_node_position(self, node, time):
         """Returns the given node's position at the given time."""
         return self._positions[node, time]
@@ -86,6 +92,13 @@ class Environment():
     def get_node_fitness(self, node, time):
         """Returns the given node's fitness at the given time."""
         return self._fitness_func[self._positions[node, time]]
+
+    def get_node_fitness_norm(self, node, time):
+        """Returns the given node's fitness norm at the given time.
+        The fitness norm is the fitness value after being normalised
+        but before being passed through a monotonic function.
+        """
+        return self._fitness_func_norm[self._positions[node, time]]
 
     def get_all_positions(self):
         """Returns the position of each node at each time."""

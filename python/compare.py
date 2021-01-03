@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as pltcolours
 
 from environment import Environment, get_action_num
-
 import agents
 
 
@@ -63,21 +62,27 @@ if __name__ == '__main__':
 
     # load strategies
     strategies = {}
-    for strategy in config["strategies"]:
-        if strategy["type"] == "heuristic":
-            strategies[strategy["name"]] = {
-                "action num" : get_action_num(strategy["action"]),
-                "type" : "constant",
-                "alpha" : strategy["alpha"],
+    for strategy_cfg in config["strategies"]:
+        if strategy_cfg["type"] == "constant":
+            # add strategy to strategies dictionary
+            strategies[strategy_cfg["name"]] = {
+                "action num" : get_action_num(strategy_cfg["action"]),
+                "type" : strategy_cfg["type"],
+                "alpha" : strategy_cfg["alpha"],
             }
-        elif strategy["type"] == "learnt":
-            agent, _, _ = agents.load_agent_and_settings(
-                path.join(config_dir, strategy["agent config"]),
-                episode=strategy["episode"],
-            )
-            strategies[strategy["name"]] = {
-                "action function" : agent.test,
-                "alpha" : strategy["alpha"],
+        elif strategy_cfg["type"] == "learnt":
+            agent, _ = agents.from_config(strategy_cfg["config file"],
+                                          get_action_num)
+            if strategy_cfg["episode"]:
+                agent.load(suffix=strategy_cfg["episode"])
+            else:
+                agent.load(suffix="final")
+
+            # add strategy to strategies dictionary
+            strategies[strategy_cfg["name"]] = {
+                "agent" : agent,
+                "type" : strategy_cfg["type"],
+                "alpha" : strategy_cfg["alpha"],
             }
 
     # the environment
@@ -98,26 +103,29 @@ if __name__ == '__main__':
     for _ in range(config["episodes"]):
         environment.generate_new_fitness_func()
 
-        for strategy_name, strategy in strategies.items():
+        for strategy_name, strategy_cfg in strategies.items():
             environment.reset()
 
-            if strategy["type"] == "constant":
+            if strategy_cfg["type"] == "constant":
                 # if a constant action strategy, set all action to
                 # the constant action and run the full episode.
-                environment.set_all_actions(strategy["action num"])
+                environment.set_all_actions(strategy_cfg["action num"])
                 environment.run_episode()
 
-            elif strategy["type"] == "learnt":
-
+            elif strategy_cfg["type"] == "learnt":
                 for time in range(config["deadline"]):
                     for node in range(config["graph"]["num_nodes"]):
-                        environment.set_action(node, time, 1)
+                        action = strategy_cfg["agent"].choose_greedy_action(
+                                time,
+                                environment.get_node_fitness_norm(node, time),
+                                )
+                        environment.set_action(node, time, action)
 
                     environment.run_time_step(time)
 
             fitnesses[strategy_name].append(environment.get_mean_fitnesses())
 
-    # plot fitness comparison over these episodes
+
     colour_iterator = iter(pltcolours.TABLEAU_COLORS)
 
     fitness_means = {}
@@ -133,6 +141,7 @@ if __name__ == '__main__':
                 * np.std(fitnesses[strategy_name], axis=1) \
                 / np.sqrt(config["episodes"])
 
+        # plot fitness comparison over these episodes
         if config["95confidence"]:
             line_and_error(
                 plt,
