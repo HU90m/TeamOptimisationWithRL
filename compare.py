@@ -47,13 +47,17 @@ if __name__ == '__main__':
     np.random.seed(random.getrandbits(32))
 
     # generate graph
-    if config["graph"]["type"] == "regular":
+    graph_type = config["graph"]["type"]
+    if graph_type == "regular":
         num_nodes = config["graph"]["num_nodes"]
         degree = config["graph"]["degree"]
         graph = nx.circulant_graph(num_nodes, range(degree//2 +1))
 
-    elif config["graph"]["type"] == "full":
+    elif graph_type == "full":
         graph = nx.complete_graph(config["graph"]["num_nodes"])
+
+    else:
+        raise ValueError(f"Graph type '{graph_type}' is not supported")
 
     DRAW_GRAPH = False
     if DRAW_GRAPH:
@@ -63,14 +67,15 @@ if __name__ == '__main__':
     # load strategies
     strategies = {}
     for strategy_cfg in config["strategies"]:
-        if strategy_cfg["type"] == "constant":
+        strategy_type = strategy_cfg["type"]
+        if strategy_type == "constant":
             # add strategy to strategies dictionary
             strategies[strategy_cfg["name"]] = {
                 "action num" : get_action_num(strategy_cfg["action"]),
                 "type" : strategy_cfg["type"],
                 "alpha" : strategy_cfg["alpha"],
             }
-        elif strategy_cfg["type"] == "learnt":
+        elif strategy_type == "learnt":
             agent, _ = agents.from_config(strategy_cfg["config file"],
                                           get_action_num)
             if strategy_cfg["episode"]:
@@ -84,6 +89,10 @@ if __name__ == '__main__':
                 "type" : strategy_cfg["type"],
                 "alpha" : strategy_cfg["alpha"],
             }
+
+        else:
+            raise ValueError(f"Strategy type '{strategy_type}'"
+                              " is not supported")
 
     # the environment
     environment = Environment(

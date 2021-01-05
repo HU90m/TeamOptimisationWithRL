@@ -1,0 +1,51 @@
+{
+    "title" : "Comparison of heuristic strategies\nand the Q Learning agent's learnt strategy",
+    "deadline" : 15,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 6
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "conformity imitation then step",
+            "action" : "modal_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "Q Learning agent at the end of training",
+            "episode" : null,
+            "config file" : "configs/example/qlearn_agent/qlearn_agent.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "Q Learning agent halfway through training",
+            "episode" : 2500,
+            "config file" : "configs/example/qlearn_agent/qlearn_agent.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
