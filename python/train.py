@@ -55,40 +55,37 @@ if __name__ == '__main__':
     num_nodes = train_env_config["graph"]["num nodes"]
     save_interval = train_env_config["save interval"]
 
-    for episode in range(train_env_config["episodes"]):
+    for episode in range(1, train_env_config["episodes"]):
         if not episode % save_interval:
             agent.save(suffix=episode)
 
-        # first time step
-        for node in range(num_nodes):
-            action = agent.choose_epsilon_greedy_action(
-                    0,
-                    environment.get_node_fitness_norm(node, 0),
-                    )
-            environment.set_action(node, 0, action)
-        environment.run_time_step(0)
-
         # subsiquent time steps
-        for time in range(1, deadline):
+        for time in range(deadline):
             for node in range(num_nodes):
-                # learn from last transition
-                agent.learn(
-                        time -1,
-                        environment.get_node_fitness_norm(node, time -1),
-                        environment.get_node_action(node, time -1),
-                        time,
-                        environment.get_node_fitness_norm(node, time),
-                        environment.get_node_fitness(node, time),
-                        )
                 # choose action to be taken by this node at this time
                 action = agent.choose_epsilon_greedy_action(
                         time,
                         environment.get_node_fitness_norm(node, time),
                         )
+                # take selected action
                 environment.set_action(node, time, action)
 
+            # run time step of environment
             environment.run_time_step(time)
 
+            # learn from the last transition
+            for node in range(num_nodes):
+                agent.learn(
+                        time,
+                        environment.get_node_fitness_norm(node, time),
+                        environment.get_node_action(node, time),
+                        time +1,
+                        environment.get_node_fitness_norm(node, time +1),
+                        environment.get_node_fitness(node, +1),
+                        )
+
+
+        # generate a new fitness function and reset for the next iteraction
         environment.generate_new_fitness_func()
         environment.reset()
 

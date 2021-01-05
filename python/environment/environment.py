@@ -152,7 +152,6 @@ class Environment():
     def run_time_step(self, time_step):
         """Run a single time step of the episode."""
         for node in range(self.num_nodes):
-
             action = self._actions[node, time_step]
 
             # carry out action
