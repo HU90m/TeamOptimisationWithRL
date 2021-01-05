@@ -1,7 +1,7 @@
 {
     "title" : "Comparison of heuristic strategies\nand the Q Learning agent's learnt strategy",
-    "deadline" : 15,
-    "episodes" : 1000,
+    "deadline" : 20,
+    "episodes" : 100,
     "95confidence": true,
     "nk landscape" : {
         "N" : 14,
@@ -41,7 +41,7 @@
         {
             "type" : "learnt",
             "name" : "Q Learning agent halfway through training",
-            "episode" : 2500,
+            "episode" : 500,
             "config file" : "configs/example/qlearn_agent/qlearn_agent.json",
             "alpha" : 1
         }

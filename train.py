@@ -85,7 +85,9 @@ if __name__ == '__main__':
                         )
 
 
-        # generate a new fitness function and reset for the next iteraction
+        # decay epsilon for the next episode
+        agent.decay_epsilon()
+        # generate a new fitness function and reset for the next episode
         environment.generate_new_fitness_func()
         environment.reset()
 

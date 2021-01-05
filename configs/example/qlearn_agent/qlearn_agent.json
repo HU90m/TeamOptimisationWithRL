@@ -2,10 +2,10 @@
     "name" : "qlearn_agent",
     "type" : "QLearningAgent",
 
-    "deadline" : 15,
+    "deadline" : 20,
 
-    "epsilon" : 1,
-    "epsilon decay" : 1.74e-6,
+    "epsilon start" : 1,
+    "epsilon decay" : 0.4e-2,
     "learning rate" : 0.01,
     "discount factor" : 1,
     "quantisation levels" : 20,
@@ -14,8 +14,8 @@
         "best"
     ],
     "training environment" : {
-        "episodes" : 5000,
-        "save interval" : 500,
+        "episodes" : 1000,
+        "save interval" : 250,
         "nk landscape" : {
             "N" : 14,
             "K" : 6

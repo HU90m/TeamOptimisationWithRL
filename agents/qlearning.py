@@ -23,7 +23,7 @@ class QLearningAgent:
         self.learning_rate = config["learning rate"]
         self.discount = config["discount factor"]
 
-        self.epsilon = config["epsilon"]
+        self.epsilon = config["epsilon start"]
         self.epsilon_decay = config["epsilon decay"]
 
         self.quantisation_levels = config["quantisation levels"]
@@ -85,9 +85,11 @@ class QLearningAgent:
             action = self.possible_actions[
                 np.argmax(self._q_table[current_state])
             ]
-        # decay epsilon
-        self.epsilon -= self.epsilon_decay * self.epsilon
         return action
+
+    def decay_epsilon(self):
+        """Decays the value of epsilon by one unit."""
+        self.epsilon -= self.epsilon_decay * self.epsilon
 
     def learn(self, prior_time, prior_fitness_norm,
               chosen_action, post_time, post_fitness_norm, post_fitness):
