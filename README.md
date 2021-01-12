@@ -22,7 +22,7 @@ There is also the `lint` shell script for linting code.
 
 There are two modules `environment` and `agent`, which hold the environment code and the code of the agents respectively.
 
-The there is also the `configs` which holds configurations of experiments.
+The there is also the `experiments` which holds configurations of experiments.
 
 
 ## Example
@@ -34,31 +34,31 @@ Before we start, you may want to follow the instructions in the 'Using the rusty
 
 There are two types of configurations comparison configurations and agent configurations.
 Comparison configurations are used by `compare.py` and agent configurations are used by `train.py` and `policy.py`.
-For an example of a configuration look at `configs/example/heuristics.json`, which can be run with the following command.
+For an example of a configuration look at `experiments/example/heuristics.json`, which can be run with the following command.
 ```bash
-python compare.py configs/example/heuristics.json
+python compare.py experiments/example/heuristics.json
 ```
 
 I put agent configurations in their own directory because when in training the configurations directory will be populated with saved instances of the agent.
-Before training the agent, have a look at it's configuration in `configs/example/qlearn_agent/qlearn_agent.json` for an example of an agent configuration.
+Before training the agent, have a look at it's configuration in `experiments/example/qlearn_agent/qlearn_agent.json` for an example of an agent configuration.
 To train an agent with this configuration
 ```bash
-python train.py configs/example/qlearn_agent/qlearn_agent.json
+python train.py experiments/example/qlearn_agent/qlearn_agent.json
 ```
 
 Once trained a visualisation of an agent's policy can be viewed.
 ```bash
-python policy.py configs/example/qlearn_agent/qlearn_agent.json
+python policy.py experiments/example/qlearn_agent/qlearn_agent.json
 ```
 If you don't want to view the agent's final policy, but a policy at a particular episode append the episode as an argument,
 n.b. this episode has to be a multiple of the 'save interval' in the agent's configuration.
 ```bash
-python policy.py configs/example/qlearn_agent/qlearn_agent.json 2500
+python policy.py experiments/example/qlearn_agent/qlearn_agent.json 2500
 ```
 
 Then to compare this trained agent's strategy with some heuristic strategies
 ```bash
-python compare.py configs/example/compare_qlearn.json
+python compare.py experiments/example/compare_qlearn.json
 ```
 
 
