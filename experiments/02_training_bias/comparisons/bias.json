@@ -1,0 +1,80 @@
+{
+    "title" : "Comparison of the agents with differnt training seeds.",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 3
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 349572",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed1.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 637190",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed2.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 542349",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed3.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 613846",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed4.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 178192",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed5.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 23458",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed6.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "seed = 30074",
+            "episode" : null,
+            "config file" : "experiments/02_training_bias/agents/seed7.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
