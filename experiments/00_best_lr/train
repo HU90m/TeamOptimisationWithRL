@@ -8,7 +8,7 @@ function kill_children()
 trap kill_children SIGINT
 
 
-cd configs/00_best_lr/
+cd experiments/00_best_lr/
 
 for config in lr_agents/*.json
 do

@@ -15,6 +15,18 @@
     "strategies" : [
         {
             "type" : "constant",
+            "name" : "step",
+            "action" : "step",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best",
+            "action" : "best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
             "name" : "step then best imitation",
             "action" : "step_then_best",
             "alpha" : 1
