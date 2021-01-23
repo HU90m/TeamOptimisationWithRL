@@ -1,0 +1,80 @@
+{
+    "title" : "Comparison of the first set of learning rates.",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 3
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.05",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_05.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.01",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_01.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.007",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_007.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.005",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_005.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.002",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_002.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.001",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_001.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.0005",
+            "episode" : null,
+            "config file" : "experiments/00_best_lr/lr_agents/lr_0005.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
