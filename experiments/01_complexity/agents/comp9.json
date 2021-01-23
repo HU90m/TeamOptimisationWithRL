@@ -1,0 +1,31 @@
+{
+    "name" : "comp9",
+    "type" : "QLearningAgent",
+
+    "deadline" : 30,
+
+    "epsilon start" : 1,
+    "epsilon decay" : 6.91e-4,
+    "learning rate" : 0.05,
+    "discount factor" : 1,
+    "quantisation levels" : 20,
+    "possible actions" : [
+        "step",
+        "best"
+    ],
+    "training environment" : {
+        "episodes" : 10000,
+        "save interval" : 1000,
+        "nk landscape" : {
+            "N" : 14,
+            "K" : 9
+        },
+        "graph" : {
+            "num nodes" : 30,
+            "type" : "regular",
+            "degree" : 5
+        },
+        "seed" : 42,
+        "max processes" : 4
+    }
+}

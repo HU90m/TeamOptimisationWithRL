@@ -1,0 +1,38 @@
+{
+    "title" : "N = 14, K = 5",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 5
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "Q Learning Agent",
+            "episode" : null,
+            "config file" : "experiments/01_complexity/agents/comp5.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
