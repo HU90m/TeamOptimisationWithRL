@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# kill children when ctrl-C is pressed
+function kill_children()
+{
+    kill $(jobs -p)
+}
+trap kill_children SIGINT
+
+
+cd experiments/03_training_episodes
+
+for config in agents/*.json
+do
+    echo "starting training of '$config'"
+    python ../../train.py "$config" &
+done
+
+# wait for children
+wait

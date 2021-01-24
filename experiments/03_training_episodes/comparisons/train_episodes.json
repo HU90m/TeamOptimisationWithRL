@@ -1,0 +1,66 @@
+{
+    "title" : "Comparison of the agents trained over a different number of episodes.",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 3
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "10000",
+            "episode" : null,
+            "config file" : "experiments/03_training_episodes/agents/10000.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "20000",
+            "episode" : null,
+            "config file" : "experiments/03_training_episodes/agents/20000.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "40000",
+            "episode" : null,
+            "config file" : "experiments/03_training_episodes/agents/40000.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "80000",
+            "episode" : null,
+            "config file" : "experiments/03_training_episodes/agents/80000.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "160000",
+            "episode" : null,
+            "config file" : "experiments/03_training_episodes/agents/160000.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
