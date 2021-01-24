@@ -1,4 +1,6 @@
-# Exploring how a change in learning rate, changes a Q Learning agent's ability
+# Experiment 02: Training Bias
+Explores how the random seed used in training affects the agent's ability.
+
 
 ## general settings
 - q learning agent
