@@ -81,7 +81,7 @@ if __name__ == '__main__':
                         environment.get_node_action(node, time),
                         time +1,
                         environment.get_node_fitness_norm(node, time +1),
-                        environment.get_node_fitness(node, +1),
+                        environment.get_node_fitness(node, time +1),
                         )
 
 
