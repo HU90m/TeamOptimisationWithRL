@@ -59,7 +59,7 @@ if __name__ == '__main__':
         if not episode % save_interval:
             agent.save(suffix=episode)
 
-        # subsiquent time steps
+        # subsequent time steps
         for time in range(deadline):
             for node in range(num_nodes):
                 # choose action to be taken by this node at this time
@@ -67,7 +67,7 @@ if __name__ == '__main__':
                         time,
                         environment.get_node_fitness_norm(node, time),
                         )
-                # take selected action
+                # set selected action
                 environment.set_action(node, time, action)
 
             # run time step of environment
@@ -89,6 +89,8 @@ if __name__ == '__main__':
         agent.decay_epsilon()
         # generate a new fitness function and reset for the next episode
         environment.generate_new_fitness_func()
+        # resets all environment traces to zero
+        # and sets new random initial positions
         environment.reset()
 
 
