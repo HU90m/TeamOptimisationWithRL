@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# kill children when ctrl-C is pressed
+function kill_children
+{
+    kill $(jobs -p)
+}
+trap kill_children SIGINT
+
+
+experiment="experiments/01_complexity"
+
+for config in $experiment/comparisons/*.json
+do
+    echo "starting comparison '$config'"
+    python3 compare.py "$config" \
+        "$experiment/figures/$(basename $config .json).pdf" &
+done
+
+# wait for children
+wait
