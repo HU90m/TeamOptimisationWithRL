@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """A script for training a Agents."""
 
 import sys

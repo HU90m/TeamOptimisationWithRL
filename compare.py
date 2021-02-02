@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """A script for comparing different policies."""
 
 import json

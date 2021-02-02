@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """A script for plotting a visual representation of an agent's policy."""
 
 import sys
