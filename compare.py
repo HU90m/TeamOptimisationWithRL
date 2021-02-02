@@ -31,14 +31,20 @@ def get_args():
     if len(sys.argv) < 2:
         print(
             'Please provide a compare json file.\n'
+            'You can provide a save location for the figure'
+            ' as a second argument.\n'
         )
         sys.exit(0)
 
-    return sys.argv[1]
+    save_location = None
+    if len(sys.argv) > 2:
+        save_location = sys.argv[2]
+
+    return sys.argv[1], save_location
 
 
 if __name__ == '__main__':
-    config_location = get_args()
+    config_location, save_location = get_args()
     config_dir, _ = path.split(config_location)
 
     with open(config_location, 'rb') as file_handle:
@@ -177,4 +183,6 @@ if __name__ == '__main__':
     plt.title(config["title"])
     plt.grid(True)
     plt.legend()
+    if save_location:
+        plt.savefig(save_location)
     plt.show()
