@@ -35,14 +35,14 @@
             "type" : "learnt",
             "name" : "Q Learning agent at the end of training",
             "episode" : null,
-            "config file" : "configs/example/qlearn_agent/qlearn_agent.json",
+            "config file" : "experiments/example/qlearn_agent/qlearn_agent.json",
             "alpha" : 1
         },
         {
             "type" : "learnt",
             "name" : "Q Learning agent halfway through training",
             "episode" : 500,
-            "config file" : "configs/example/qlearn_agent/qlearn_agent.json",
+            "config file" : "experiments/example/qlearn_agent/qlearn_agent.json",
             "alpha" : 1
         }
     ],
