@@ -1,0 +1,45 @@
+{
+    "title" : "Comparison of boltzmann exploration vs $\\epsilon$-greedy.",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 3
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "$\\epsilon$-greedy",
+            "episode" : null,
+            "config file" : "experiments/04_exploration_type/agents/epsilon_greedy.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "boltzmann",
+            "episode" : null,
+            "config file" : "experiments/04_exploration_type/agents/boltzmann.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}
