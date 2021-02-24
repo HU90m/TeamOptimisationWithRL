@@ -23,9 +23,6 @@ class QLearningAgent:
         self.learning_rate = config["learning rate"]
         self.discount = config["discount factor"]
 
-        self.epsilon = config["epsilon start"]
-        self.epsilon_decay = config["epsilon decay"]
-
         self.quantisation_levels = config["quantisation levels"]
 
         # set up actions
@@ -51,10 +48,23 @@ class QLearningAgent:
         # the count of the number of times each state has been updated
         self._update_count = np.zeros(q_table_shape[:-1])
 
-        # action methods
-        self.best_action = self._choose_greedy_action
-        self.explore_action = self._choose_epsilon_greedy_action
-        self.episode_end = self._decay_epsilon
+
+        # exploration type
+        if config["exploration"]["type"] == "epsilon greedy":
+            self.epsilon = config["exploration"]["epsilon start"]
+            self.epsilon_decay = config["exploration"]["epsilon decay"]
+
+            self.best_action = self._choose_greedy_action
+            self.explore_action = self._choose_epsilon_greedy_action
+            self.episode_end = self._decay_epsilon
+
+        elif config["exploration"]["type"] == "boltzmann":
+            self.best_action = self._choose_greedy_action
+            self.explore_action = self._choose_boltzmann_action
+            self.episode_end = lambda *args : None
+
+        else:
+            raise ValueError("exploration type not provided")
 
     def _find_state(self, time, current_fitness):
         """Find a worker's state at the given time."""
@@ -91,6 +101,22 @@ class QLearningAgent:
                 np.argmax(self._q_table[current_state])
             ]
         return action
+
+    def _choose_boltzmann_action(self, time, current_fitness_norm):
+        """Returns either the action using the softmax
+        as a probability distribution"""
+        current_state = self._find_state(time, current_fitness_norm)
+        action_values = self._q_table[current_state]
+
+        action_values_exp = \
+                np.array([np.exp(action) for action in action_values])
+
+        probs = action_values_exp / np.sum(action_values_exp)
+
+        action_num = np.random.choice(
+                self.possible_actions, 1, replace=False, p=probs,
+        )
+        return action_num
 
     def _decay_epsilon(self):
         """Decays the value of epsilon by one unit."""

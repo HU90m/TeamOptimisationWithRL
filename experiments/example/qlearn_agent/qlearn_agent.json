@@ -4,11 +4,14 @@
 
     "deadline" : 20,
 
-    "epsilon start" : 1,
-    "epsilon decay" : 0.4e-2,
     "learning rate" : 0.01,
     "discount factor" : 1,
     "quantisation levels" : 20,
+    "exploration" : {
+        "type" : "epsilon greedy",
+        "epsilon start" : 1,
+        "epsilon decay" : 0.4e-2
+    },
     "possible actions" : [
         "step",
         "best"
