@@ -131,7 +131,7 @@ if __name__ == '__main__':
             elif strategy_cfg["type"] == "learnt":
                 for time in range(config["deadline"]):
                     for node in range(config["graph"]["num_nodes"]):
-                        action = strategy_cfg["agent"].choose_greedy_action(
+                        action = strategy_cfg["agent"].best_action(
                                 time,
                                 environment.get_node_fitness_norm(node, time),
                                 )

@@ -64,7 +64,7 @@ if __name__ == '__main__':
         for time in range(deadline):
             for node in range(num_nodes):
                 # choose action to be taken by this node at this time
-                action = agent.choose_epsilon_greedy_action(
+                action = agent.explore_action(
                         time,
                         environment.get_node_fitness_norm(node, time),
                         )
@@ -86,8 +86,8 @@ if __name__ == '__main__':
                         )
 
 
-        # decay epsilon for the next episode
-        agent.decay_epsilon()
+        # method to be run at the end of the episode
+        agent.episode_end()
         # generate a new fitness function and reset for the next episode
         environment.generate_new_fitness_func()
         # resets all environment traces to zero

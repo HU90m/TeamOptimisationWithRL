@@ -51,6 +51,11 @@ class QLearningAgent:
         # the count of the number of times each state has been updated
         self._update_count = np.zeros(q_table_shape[:-1])
 
+        # action methods
+        self.best_action = self._choose_greedy_action
+        self.explore_action = self._choose_epsilon_greedy_action
+        self.episode_end = self._decay_epsilon
+
     def _find_state(self, time, current_fitness):
         """Find a worker's state at the given time."""
         return (time, int(current_fitness * (self.quantisation_levels -1)))
@@ -68,12 +73,12 @@ class QLearningAgent:
         self._q_table[prior_state][action_idx] += self.learning_rate * td_delta
         self._update_count[prior_state] += 1
 
-    def choose_greedy_action(self, time, current_fitness_norm):
+    def _choose_greedy_action(self, time, current_fitness_norm):
         """Returns the best action according the Q table."""
         current_state = self._find_state(time, current_fitness_norm)
         return self.possible_actions[np.argmax(self._q_table[current_state])]
 
-    def choose_epsilon_greedy_action(self, time, current_fitness_norm):
+    def _choose_epsilon_greedy_action(self, time, current_fitness_norm):
         """Returns either the best action according the Q table
         or a random action depending on the current epsilon value.
         """
@@ -87,7 +92,7 @@ class QLearningAgent:
             ]
         return action
 
-    def decay_epsilon(self):
+    def _decay_epsilon(self):
         """Decays the value of epsilon by one unit."""
         self.epsilon -= self.epsilon_decay * self.epsilon
 
