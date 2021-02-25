@@ -1,0 +1,41 @@
+{
+    "name" : "policygrad_simple",
+    "type" : "PolicyGradientAgent",
+
+    "deadline" : 30,
+
+    "learning rate" : 0.008,
+    "discount factor" : 1,
+    "network type" : "simple",
+    "state space" : "time and score",
+
+    "buffer capacity" : 6000,
+    "sample size" : 600,
+    "target update frequency" : 10,
+    "delay learning" : 1,
+
+    "exploration" : {
+        "type" : "epsilon greedy",
+        "epsilon start" : 1,
+        "epsilon decay" : 6.91e-4
+    },
+    "possible actions" : [
+        "step",
+        "best"
+    ],
+    "training environment" : {
+        "episodes" : 10000,
+        "save interval" : 500,
+        "nk landscape" : {
+            "N" : 14,
+            "K" : 3
+        },
+        "graph" : {
+            "num nodes" : 30,
+            "type" : "regular",
+            "degree" : 5
+        },
+        "seed" : 349572,
+        "max processes" : 4
+    }
+}

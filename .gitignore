@@ -1,3 +1,4 @@
 *.np
 *.npz
+*.pt
 *.txt

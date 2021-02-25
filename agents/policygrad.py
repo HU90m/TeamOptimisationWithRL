@@ -188,26 +188,20 @@ class LinearNet(torch.nn.Module):
         return self.only_layer(state)
 
 class SimpleNet(torch.nn.Module):
-    """A Simple Network consisting of three layers."""
+    """A Simple Network consisting of two layers."""
 
     def __init__(self, input_dimensions, output_dimensions):
         super().__init__()
 
-        self.layer_1 = torch.nn.Linear(in_features=input_dimensions,
-                                       out_features=100)
-        self.layer_2 = torch.nn.Linear(in_features=100, out_features=100)
-        self.output_layer = torch.nn.Linear(in_features=100,
-                                            out_features=output_dimensions)
+        self.network = torch.nn.Sequential(
+            torch.nn.Linear(in_features=input_dimensions, out_features=4),
+            torch.nn.LeakyReLU(),
+            torch.nn.Linear(in_features=4, out_features=output_dimensions),
+        )
 
     def forward(self, state):
-        """Returns the network's output, when x is the input.
-        A ReLU activation function is used for both hidden layers,
-        but the output layer has no activation function (just linear).
-        """
-        layer_1_output = torch.nn.functional.relu(self.layer_1(state))
-        layer_2_output = torch.nn.functional.relu(self.layer_2(layer_1_output))
-        output = self.output_layer(layer_2_output)
-        return output
+        """Returns the network's output, when x is the input."""
+        return self.network(state)
 
 class DQN:
     """Determines how to train the above neural network."""

@@ -1,0 +1,59 @@
+{
+    "title" : "Comparison of agent types.",
+    "deadline" : 30,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 3
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "qlearn",
+            "episode" : null,
+            "config file" : "experiments/05_agent_type/agents/qlearn.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "policygrad",
+            "episode" : null,
+            "config file" : "experiments/05_agent_type/agents/policygrad.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "policygrad_boltzmann",
+            "episode" : null,
+            "config file" : "experiments/05_agent_type/agents/policygrad_boltzmann.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "policygrad_simple",
+            "episode" : 7500,
+            "config file" : "experiments/05_agent_type/agents/policygrad_simple.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}

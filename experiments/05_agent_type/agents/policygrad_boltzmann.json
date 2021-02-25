@@ -1,0 +1,39 @@
+{
+    "name" : "policygrad_boltzmann",
+    "type" : "PolicyGradientAgent",
+
+    "deadline" : 30,
+
+    "learning rate" : 0.001,
+    "discount factor" : 1,
+    "network type" : "linear",
+    "state space" : "time and score",
+
+    "buffer capacity" : 6000,
+    "sample size" : 600,
+    "target update frequency" : 5,
+    "delay learning" : 1,
+
+    "exploration" : {
+        "type" : "boltzmann"
+    },
+    "possible actions" : [
+        "step",
+        "best"
+    ],
+    "training environment" : {
+        "episodes" : 10000,
+        "save interval" : 500,
+        "nk landscape" : {
+            "N" : 14,
+            "K" : 3
+        },
+        "graph" : {
+            "num nodes" : 30,
+            "type" : "regular",
+            "degree" : 5
+        },
+        "seed" : 349572,
+        "max processes" : 4
+    }
+}
