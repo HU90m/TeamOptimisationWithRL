@@ -6,7 +6,11 @@
 
     "learning rate" : 0.01,
     "discount factor" : 1,
-    "quantisation levels" : 20,
+
+    "state space" : {
+        "type": "time fitness",
+        "quantisation levels" : 20
+    },
     "exploration" : {
         "type" : "epsilon greedy",
         "epsilon start" : 1,

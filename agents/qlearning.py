@@ -6,6 +6,7 @@ from numpy import random
 import matplotlib.pyplot as plt
 from matplotlib import colors, ticker
 
+import environment.bitmanipulation as bitm
 
 ###############################################################################
 # Agent
@@ -23,8 +24,6 @@ class QLearningAgent:
         self.learning_rate = config["learning rate"]
         self.discount = config["discount factor"]
 
-        self.quantisation_levels = config["quantisation levels"]
-
         # set up actions
         self._possible_actions_str = config["possible actions"]
         self.possible_actions = []
@@ -37,12 +36,33 @@ class QLearningAgent:
         for action_idx, action_num in enumerate(self.possible_actions):
             self.action_num2idx[action_num] = action_idx
 
-        # generate q table
-        q_table_shape = [
-            self.deadline +1, # time
-            self.quantisation_levels, # score
-            len(self.possible_actions), # possible actions
-        ]
+        self.state_space_type = config["state space"]["type"]
+        if self.state_space_type == "time fitness":
+            self.quantisation_levels = \
+                    config["state space"]["quantisation levels"]
+
+            self._find_state = self._find_state_time_fitness
+
+            q_table_shape = [
+                self.deadline +1, # time
+                self.quantisation_levels, # fitness
+                len(self.possible_actions), # possible actions
+            ]
+        elif self.state_space_type == "time memory":
+            assert len(self.possible_actions) == 2
+            self.history = \
+                    config["state space"]["history"]
+
+            self._find_state = self._find_state_time_memory
+
+            q_table_shape = [
+                self.deadline +1, # time
+                1 << self.history, # memory
+                len(self.possible_actions), # possible actions
+            ]
+        else:
+            raise ValueError("State space type not valid")
+
         self._q_table = np.zeros(q_table_shape)
 
         # the count of the number of times each state has been updated
@@ -64,12 +84,42 @@ class QLearningAgent:
             self.episode_end = lambda *args : None
 
         else:
-            raise ValueError("exploration type not provided")
+            raise ValueError("Exploration type not valid")
 
-    def _find_state(self, node, time, environment):
-        """Find a worker's state at the given time."""
+    def _find_state_time_fitness(self, node, time, environment):
+        """Find a worker's state at the given time.
+        The state space used is the time and the quantised normalised fitness.
+        """
         current_fitness = environment.get_node_fitness_norm(node, time)
         return (time, int(current_fitness * (self.quantisation_levels -1)))
+
+    def _find_state_time_memory(self, node, time, environment):
+        """Find a worker's state at the given time.
+        The state space used is the time and the binary memory.
+
+        Binary memory is an integer with bit-length of the given history.
+
+        The value of each bit is the action
+        which was taken in a given time-step of the last few time-steps.
+
+        For example, the number 11 (1011 in binary),
+        when there is a history of 4, would mean
+        that action 1 was taken taken at time -1, time -2 and time -4,
+        and so action 0 was only taken at time -3.
+
+        | time -4 | time -3 | time -2 | time -1 |
+        |    1    |    0    |    1    |    1    |
+        """
+        end = time if time < self.history else self.history
+
+        memory = 0
+        for idx in range(end):
+            action_idx = self.action_num2idx[
+                    environment.get_node_action(node, time - idx - 1)
+            ]
+            memory = bitm.set_bit(memory, idx, action_idx)
+
+        return (time, memory)
 
     def _update_q_table(self, prior_state, action_num, post_state, reward):
         """Updates the Q table using the given transition."""

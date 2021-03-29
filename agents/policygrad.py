@@ -41,14 +41,17 @@ class PolicyGradientAgent:
             raise ValueError("Network type not valid.")
 
         # state space choice
-        if config["state space"] == "time":
+        self.state_space_type = config["state space"]["type"]
+        if self.state_space_type == "time":
             self._find_state = self._find_state_time
             self.num_states = 1
-        elif config["state space"] == "time and score":
-            self._find_state = self._find_state_time_score
+
+        elif self.state_space_type == "time fitness":
+            self._find_state = self._find_state_time_fitness
             self.num_states = 2
+
         else:
-            ValueError("State space not valid.")
+            raise ValueError("State space type not valid")
 
         # exploration type
         if config["exploration"]["type"] == "epsilon greedy":
@@ -133,7 +136,7 @@ class PolicyGradientAgent:
         """Find a worker's state at the given time."""
         return (time,)
 
-    def _find_state_time_score(self, node, time, environment):
+    def _find_state_time_fitness(self, node, time, environment):
         """Find a worker's state at the given time."""
         current_fitness = environment.get_node_fitness_norm(node, time)
         return (time, current_fitness)
