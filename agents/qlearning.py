@@ -66,8 +66,9 @@ class QLearningAgent:
         else:
             raise ValueError("exploration type not provided")
 
-    def _find_state(self, time, current_fitness):
+    def _find_state(self, node, time, environment):
         """Find a worker's state at the given time."""
+        current_fitness = environment.get_node_fitness_norm(node, time)
         return (time, int(current_fitness * (self.quantisation_levels -1)))
 
     def _update_q_table(self, prior_state, action_num, post_state, reward):
@@ -83,16 +84,16 @@ class QLearningAgent:
         self._q_table[prior_state][action_idx] += self.learning_rate * td_delta
         self._update_count[prior_state] += 1
 
-    def _choose_greedy_action(self, time, current_fitness_norm):
+    def _choose_greedy_action(self, node, time, environment):
         """Returns the best action according the Q table."""
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         return self.possible_actions[np.argmax(self._q_table[current_state])]
 
-    def _choose_epsilon_greedy_action(self, time, current_fitness_norm):
+    def _choose_epsilon_greedy_action(self, node, time, environment):
         """Returns either the best action according the Q table
         or a random action depending on the current epsilon value.
         """
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         # choose action
         if random.rand() <= self.epsilon:
             action = random.choice(self.possible_actions)
@@ -102,10 +103,10 @@ class QLearningAgent:
             ]
         return action
 
-    def _choose_boltzmann_action(self, time, current_fitness_norm):
+    def _choose_boltzmann_action(self, node, time, environment):
         """Returns either the action using the softmax
         as a probability distribution"""
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         action_values = self._q_table[current_state]
 
         action_values_exp = \
@@ -122,18 +123,16 @@ class QLearningAgent:
         """Decays the value of epsilon by one unit."""
         self.epsilon -= self.epsilon_decay * self.epsilon
 
-    def learn(self, prior_time, prior_fitness_norm,
-              chosen_action, post_time, post_fitness_norm, post_fitness):
+    def learn(self, node, prior_time, post_time, environment):
         """Learns from a transition."""
-        prior_state = self._find_state(prior_time, prior_fitness_norm)
-        post_state = self._find_state(post_time, post_fitness_norm)
+        prior_state = self._find_state(node, prior_time, environment)
+        post_state = self._find_state(node, post_time, environment)
 
         # each node only receives a reward at the deadline
-        if post_time == self.deadline:
-            reward = post_fitness
-        else:
-            reward = 0
+        reward = environment.get_node_fitness(node, post_time) \
+                if post_time == self.deadline else 0
 
+        chosen_action = environment.get_node_action(node, prior_time)
         self._update_q_table(prior_state, chosen_action, post_state, reward)
 
     def _find_file_name(self, suffix):

@@ -84,17 +84,17 @@ class PolicyGradientAgent:
         self.delay_learning = config["delay learning"]
         self.episode_count = 0
 
-    def _choose_greedy_action(self, time, current_fitness_norm):
+    def _choose_greedy_action(self, node, time, environment):
         """Returns the best action according the Q net."""
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         action_idx = self._qnet.choose_best_action(current_state)
         return self.possible_actions[action_idx]
 
-    def _choose_epsilon_greedy_action(self, time, current_fitness_norm):
+    def _choose_epsilon_greedy_action(self, node, time, environment):
         """Returns either the best action according the Q net
         or a random action depending on the current epsilon value.
         """
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         # choose action
         if np.random.rand() <= self.epsilon:
             action = np.random.choice(self.possible_actions)
@@ -104,10 +104,10 @@ class PolicyGradientAgent:
             ]
         return action
 
-    def _choose_boltzmann_action(self, time, current_fitness_norm):
+    def _choose_boltzmann_action(self, node, time, environment):
         """Returns an action using the softmax
         as a probability distribution"""
-        current_state = self._find_state(time, current_fitness_norm)
+        current_state = self._find_state(node, time, environment)
         action_probs = self._qnet.action_values_softmax(current_state)
 
         action_num = np.random.choice(
@@ -129,23 +129,25 @@ class PolicyGradientAgent:
         self.episode_count += 1
         self.epsilon -= self.epsilon_decay * self.epsilon
 
-    def _find_state_time(self, time, current_fitness):
+    def _find_state_time(self, node, time, environment):
         """Find a worker's state at the given time."""
         return (time,)
 
-    def _find_state_time_score(self, time, current_fitness):
+    def _find_state_time_score(self, node, time, environment):
         """Find a worker's state at the given time."""
+        current_fitness = environment.get_node_fitness_norm(node, time)
         return (time, current_fitness)
 
-    def _save_transition(self, prior_time, prior_fitness_norm,
-              chosen_action, post_time, post_fitness_norm, post_fitness):
+    def _save_transition(self, node, prior_time, post_time, environment):
         """Learns from a transition."""
-        prior_state = self._find_state(prior_time, prior_fitness_norm)
-        post_state = self._find_state(post_time, post_fitness_norm)
+        prior_state = self._find_state(node, prior_time, environment)
+        post_state = self._find_state(node, post_time, environment)
 
         # each node only receives a reward at the deadline
-        reward = post_fitness if post_time == self.deadline else 0
+        reward = environment.get_node_fitness(node, post_time) \
+                if post_time == self.deadline else 0
 
+        chosen_action = environment.get_node_action(node, prior_time)
         action_idx = self.action_num2idx[chosen_action]
 
         self._qnet.add_to_buffer(

@@ -132,8 +132,9 @@ if __name__ == '__main__':
                 for time in range(config["deadline"]):
                     for node in range(config["graph"]["num_nodes"]):
                         action = strategy_cfg["agent"].best_action(
+                                node,
                                 time,
-                                environment.get_node_fitness_norm(node, time),
+                                environment,
                                 )
                         environment.set_action(node, time, action)
 

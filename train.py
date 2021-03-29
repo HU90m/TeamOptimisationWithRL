@@ -64,10 +64,8 @@ if __name__ == '__main__':
         for time in range(deadline):
             for node in range(num_nodes):
                 # choose action to be taken by this node at this time
-                action = agent.explore_action(
-                        time,
-                        environment.get_node_fitness_norm(node, time),
-                        )
+                action = agent.explore_action(node, time, environment)
+
                 # set selected action
                 environment.set_action(node, time, action)
 
@@ -76,14 +74,7 @@ if __name__ == '__main__':
 
             # learn from the last transition
             for node in range(num_nodes):
-                agent.learn(
-                        time,
-                        environment.get_node_fitness_norm(node, time),
-                        environment.get_node_action(node, time),
-                        time +1,
-                        environment.get_node_fitness_norm(node, time +1),
-                        environment.get_node_fitness(node, time +1),
-                        )
+                agent.learn(node, time, time + 1, environment)
 
 
         # method to be run at the end of the episode
