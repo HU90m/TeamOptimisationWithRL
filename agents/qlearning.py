@@ -409,6 +409,7 @@ def plot_q_table_action_image(
         ytick_stride=2,
         xtick_stride=2,
         len_binary_yticklabels=None,
+        colour_map="plasma",
 ):
     """Plots the relative value of an action at each time step."""
 
@@ -420,7 +421,7 @@ def plot_q_table_action_image(
     diff_actions = np.swapaxes(diff_actions, 0, 1)
     diff_actions = diff_actions[:, :-1]
 
-    image = axis.imshow(diff_actions, cmap="gist_rainbow", vmin=0, vmax=1)
+    image = axis.imshow(diff_actions, cmap=colour_map, vmin=0, vmax=1)
     cbar = axis.figure.colorbar(image, ax=axis)
     cbar.ax.set_ylabel("Relative Value of Action")
 
