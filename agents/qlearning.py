@@ -219,15 +219,17 @@ class QLearningAgent:
         Plots the q table and update count of an agent in the provided figure.
         """
         if self.state_space_type == "time memory":
-            bin_labels = True
+            len_bin_labels = self.history
             y_stride = 1
             print(
                 "Binary memory values:\n\t0 -", self._possible_actions_str[0],
                 "\n\t1 -", self._possible_actions_str[1],
             )
+            ylabel = "Binary Memory"
         else:
+            len_bin_labels = None
             y_stride = 2
-            bin_labels = False
+            ylabel = "Fitness"
 
         num_possible_actions = len(self.possible_actions)
         if num_possible_actions == 2:
@@ -238,7 +240,7 @@ class QLearningAgent:
                 self._q_table,
                 axis=axs[0],
                 ytick_stride=y_stride,
-                binary_yticklabels=bin_labels,
+                len_binary_yticklabels=len_bin_labels,
             )
             plot_q_table_action_image(
                 self._possible_actions_str,
@@ -246,17 +248,17 @@ class QLearningAgent:
                 self._q_table,
                 axis=axs[1],
                 ytick_stride=y_stride,
-                binary_yticklabels=bin_labels,
+                len_binary_yticklabels=len_bin_labels,
             )
             plot_update_count_image(
                 self._update_count,
                 axis=axs[2],
                 ytick_stride=y_stride,
-                binary_yticklabels=bin_labels,
+                len_binary_yticklabels=len_bin_labels,
             )
 
             for axis in axs:
-                axis.set_ylabel("Fitness")
+                axis.set_ylabel(ylabel)
                 axis.set_xlabel("Time Step")
 
         elif num_possible_actions == 3:
@@ -299,7 +301,7 @@ def plot_update_count_image(
         axis=None,
         ytick_stride=2,
         xtick_stride=2,
-        binary_yticklabels=False,
+        len_binary_yticklabels=None,
 ):
     """Plots the given update_count as an image."""
     if not axis:
@@ -323,8 +325,10 @@ def plot_update_count_image(
     axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, update_count.shape[1], xtick_stride))
 
-    if binary_yticklabels:
-        axis.set_yticklabels([bin(i)[2:] for i in yticks])
+    if len_binary_yticklabels:
+        axis.set_yticklabels(
+                [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
+        )
 
     axis.set_xlim(0.5, update_count.shape[1])
     axis.set_ylim(-0.5, update_count.shape[0])
@@ -341,7 +345,7 @@ def plot_q_table_image(
         axis=None,
         ytick_stride=2,
         xtick_stride=2,
-        binary_yticklabels=False,
+        len_binary_yticklabels=None,
 ):
     """Plots the preferred action in each state for a given q table."""
 
@@ -383,8 +387,10 @@ def plot_q_table_image(
     axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, best_actions.shape[1], xtick_stride))
 
-    if binary_yticklabels:
-        axis.set_yticklabels([bin(i)[2:] for i in yticks])
+    if len_binary_yticklabels:
+        axis.set_yticklabels(
+                [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
+        )
 
     axis.set_xlim(0.5, best_actions.shape[1])
     axis.set_ylim(-0.5, best_actions.shape[0])
@@ -402,7 +408,7 @@ def plot_q_table_action_image(
         axis=None,
         ytick_stride=2,
         xtick_stride=2,
-        binary_yticklabels=False,
+        len_binary_yticklabels=None,
 ):
     """Plots the relative value of an action at each time step."""
 
@@ -429,8 +435,10 @@ def plot_q_table_action_image(
     axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, diff_actions.shape[1], xtick_stride))
 
-    if binary_yticklabels:
-        axis.set_yticklabels([bin(i)[2:] for i in yticks])
+    if len_binary_yticklabels:
+        axis.set_yticklabels(
+                [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
+        )
 
     axis.set_xlim(0.5, diff_actions.shape[1])
     axis.set_ylim(-0.5, diff_actions.shape[0])
