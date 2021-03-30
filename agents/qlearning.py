@@ -218,17 +218,39 @@ class QLearningAgent:
         """Plots the q table and update count.
         Plots the q table and update count of an agent in the provided figure.
         """
+        if self.state_space_type == "time memory":
+            bin_labels = True
+            print(
+                "Binary memory values:\n\t0 -", self._possible_actions_str[0],
+                "\n\t1 -", self._possible_actions_str[1],
+            )
+        else:
+            bin_labels = False
+
         num_possible_actions = len(self.possible_actions)
         if num_possible_actions == 2:
             axs = figure.subplots(3, 1)
 
             plot_q_table_image(
-                self._possible_actions_str, self._q_table, axis=axs[0]
+                self._possible_actions_str,
+                self._q_table,
+                axis=axs[0],
+                binary_yticklabels=bin_labels,
             )
             plot_q_table_action_image(
-                self._possible_actions_str, 0, self._q_table, axis=axs[1]
+                self._possible_actions_str,
+                0,
+                self._q_table,
+                axis=axs[1],
+                binary_yticklabels=bin_labels,
             )
-            plot_update_count_image(self._update_count, axis=axs[2])
+            plot_update_count_image(
+                self._update_count, axis=axs[2], binary_yticklabels=bin_labels,
+            )
+
+            for axis in axs:
+                axis.set_ylabel("Fitness")
+                axis.set_xlabel("Time Step")
 
         elif num_possible_actions == 3:
 
@@ -247,6 +269,12 @@ class QLearningAgent:
                 self._possible_actions_str, 2, self._q_table, axis=axs[1, 1]
             )
             axs[2, 1].remove()
+
+            for i in range(3):
+                for j in range(2):
+                    axs[i, j].set_ylabel("Fitness")
+                    axs[i, j].set_xlabel("Time Step")
+
         else:
             raise ValueError("Can only plot tables for agents with"
                              " two or three possible actions."
@@ -259,7 +287,7 @@ class QLearningAgent:
 # Functions
 ###############################################################################
 #
-def plot_update_count_image(update_count, axis=None):
+def plot_update_count_image(update_count, axis=None, binary_yticklabels=False):
     """Plots the given update_count as an image."""
     if not axis:
         axis = plt.gca()
@@ -278,8 +306,12 @@ def plot_update_count_image(update_count, axis=None):
     axis.set_xticks(np.arange(0.5, update_count.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, update_count.shape[0], 1), minor=True)
 
+    yticks = np.arange(0, update_count.shape[0], 2)
+    axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, update_count.shape[1], 2))
-    axis.set_yticks(np.arange(0, update_count.shape[0], 2))
+
+    if binary_yticklabels:
+        axis.set_yticklabels([bin(i)[2:] for i in yticks])
 
     axis.set_xlim(0.5, update_count.shape[1])
     axis.set_ylim(-0.5, update_count.shape[0])
@@ -287,12 +319,15 @@ def plot_update_count_image(update_count, axis=None):
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
     axis.tick_params(which="minor", bottom=False, left=False)
 
-    axis.set_ylabel("Score")
-    axis.set_xlabel("Time Step")
     axis.set_title("Experience")
 
 
-def plot_q_table_image(possible_actions, q_table, axis=None):
+def plot_q_table_image(
+        possible_actions,
+        q_table,
+        axis=None,
+        binary_yticklabels=False
+):
     """Plots the preferred action in each state for a given q table."""
 
     if not axis:
@@ -329,8 +364,12 @@ def plot_q_table_image(possible_actions, q_table, axis=None):
     axis.set_xticks(np.arange(0.5, best_actions.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, best_actions.shape[0], 1), minor=True)
 
+    yticks = np.arange(0, best_actions.shape[0], 2)
+    axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, best_actions.shape[1], 2))
-    axis.set_yticks(np.arange(0, best_actions.shape[0], 2))
+
+    if binary_yticklabels:
+        axis.set_yticklabels([bin(i)[2:] for i in yticks])
 
     axis.set_xlim(0.5, best_actions.shape[1])
     axis.set_ylim(-0.5, best_actions.shape[0])
@@ -338,13 +377,15 @@ def plot_q_table_image(possible_actions, q_table, axis=None):
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
     axis.tick_params(which="minor", bottom=False, left=False)
 
-    axis.set_ylabel("Score")
-    axis.set_xlabel("Time Step")
     axis.set_title("Learnt Policy")
 
 
 def plot_q_table_action_image(
-        possible_actions, action_idx, q_table, axis=None
+        possible_actions,
+        action_idx,
+        q_table,
+        axis=None,
+        binary_yticklabels=False,
 ):
     """Plots the relative value of an action at each time step."""
 
@@ -367,8 +408,12 @@ def plot_q_table_action_image(
     axis.set_xticks(np.arange(0.5, diff_actions.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, diff_actions.shape[0], 1), minor=True)
 
+    yticks = np.arange(0, diff_actions.shape[0], 2)
+    axis.set_yticks(yticks)
     axis.set_xticks(np.arange(0, diff_actions.shape[1], 2))
-    axis.set_yticks(np.arange(0, diff_actions.shape[0], 2))
+
+    if binary_yticklabels:
+        axis.set_yticklabels([bin(i)[2:] for i in yticks])
 
     axis.set_xlim(0.5, diff_actions.shape[1])
     axis.set_ylim(-0.5, diff_actions.shape[0])
@@ -376,6 +421,4 @@ def plot_q_table_action_image(
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
     axis.tick_params(which="minor", bottom=False, left=False)
 
-    axis.set_ylabel("Score")
-    axis.set_xlabel("Time Step")
     axis.set_title(f"Relative Value of '{possible_actions[action_idx]}'")
