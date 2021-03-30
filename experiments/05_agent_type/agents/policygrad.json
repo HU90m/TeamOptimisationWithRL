@@ -7,8 +7,9 @@
     "learning rate" : 0.001,
     "discount factor" : 1,
     "network type" : "linear",
-    "state space" : "time and score",
-
+    "state space" : {
+        "type" : "time fitness"
+    },
     "buffer capacity" : 6000,
     "sample size" : 600,
     "target update frequency" : 5,
