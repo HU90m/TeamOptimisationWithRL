@@ -220,11 +220,13 @@ class QLearningAgent:
         """
         if self.state_space_type == "time memory":
             bin_labels = True
+            y_stride = 1
             print(
                 "Binary memory values:\n\t0 -", self._possible_actions_str[0],
                 "\n\t1 -", self._possible_actions_str[1],
             )
         else:
+            y_stride = 2
             bin_labels = False
 
         num_possible_actions = len(self.possible_actions)
@@ -235,6 +237,7 @@ class QLearningAgent:
                 self._possible_actions_str,
                 self._q_table,
                 axis=axs[0],
+                ytick_stride=y_stride,
                 binary_yticklabels=bin_labels,
             )
             plot_q_table_action_image(
@@ -242,10 +245,14 @@ class QLearningAgent:
                 0,
                 self._q_table,
                 axis=axs[1],
+                ytick_stride=y_stride,
                 binary_yticklabels=bin_labels,
             )
             plot_update_count_image(
-                self._update_count, axis=axs[2], binary_yticklabels=bin_labels,
+                self._update_count,
+                axis=axs[2],
+                ytick_stride=y_stride,
+                binary_yticklabels=bin_labels,
             )
 
             for axis in axs:
@@ -287,7 +294,13 @@ class QLearningAgent:
 # Functions
 ###############################################################################
 #
-def plot_update_count_image(update_count, axis=None, binary_yticklabels=False):
+def plot_update_count_image(
+        update_count,
+        axis=None,
+        ytick_stride=2,
+        xtick_stride=2,
+        binary_yticklabels=False,
+):
     """Plots the given update_count as an image."""
     if not axis:
         axis = plt.gca()
@@ -306,9 +319,9 @@ def plot_update_count_image(update_count, axis=None, binary_yticklabels=False):
     axis.set_xticks(np.arange(0.5, update_count.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, update_count.shape[0], 1), minor=True)
 
-    yticks = np.arange(0, update_count.shape[0], 2)
+    yticks = np.arange(0, update_count.shape[0], ytick_stride)
     axis.set_yticks(yticks)
-    axis.set_xticks(np.arange(0, update_count.shape[1], 2))
+    axis.set_xticks(np.arange(0, update_count.shape[1], xtick_stride))
 
     if binary_yticklabels:
         axis.set_yticklabels([bin(i)[2:] for i in yticks])
@@ -326,7 +339,9 @@ def plot_q_table_image(
         possible_actions,
         q_table,
         axis=None,
-        binary_yticklabels=False
+        ytick_stride=2,
+        xtick_stride=2,
+        binary_yticklabels=False,
 ):
     """Plots the preferred action in each state for a given q table."""
 
@@ -364,9 +379,9 @@ def plot_q_table_image(
     axis.set_xticks(np.arange(0.5, best_actions.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, best_actions.shape[0], 1), minor=True)
 
-    yticks = np.arange(0, best_actions.shape[0], 2)
+    yticks = np.arange(0, best_actions.shape[0], ytick_stride)
     axis.set_yticks(yticks)
-    axis.set_xticks(np.arange(0, best_actions.shape[1], 2))
+    axis.set_xticks(np.arange(0, best_actions.shape[1], xtick_stride))
 
     if binary_yticklabels:
         axis.set_yticklabels([bin(i)[2:] for i in yticks])
@@ -385,6 +400,8 @@ def plot_q_table_action_image(
         action_idx,
         q_table,
         axis=None,
+        ytick_stride=2,
+        xtick_stride=2,
         binary_yticklabels=False,
 ):
     """Plots the relative value of an action at each time step."""
@@ -408,9 +425,9 @@ def plot_q_table_action_image(
     axis.set_xticks(np.arange(0.5, diff_actions.shape[1], 1), minor=True)
     axis.set_yticks(np.arange(0.5, diff_actions.shape[0], 1), minor=True)
 
-    yticks = np.arange(0, diff_actions.shape[0], 2)
+    yticks = np.arange(0, diff_actions.shape[0], ytick_stride)
     axis.set_yticks(yticks)
-    axis.set_xticks(np.arange(0, diff_actions.shape[1], 2))
+    axis.set_xticks(np.arange(0, diff_actions.shape[1], xtick_stride))
 
     if binary_yticklabels:
         axis.set_yticklabels([bin(i)[2:] for i in yticks])
