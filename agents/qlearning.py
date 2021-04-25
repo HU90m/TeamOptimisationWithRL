@@ -31,7 +31,7 @@ class QLearningAgent:
             # convert the actions names to numbers, with the given function
             self.possible_actions.append(get_action_num_func(action_name))
 
-        # this maps the external action number to internal action indicies
+        # this maps the external action number to internal action indices
         self.action_num2idx = {}
         for action_idx, action_num in enumerate(self.possible_actions):
             self.action_num2idx[action_num] = action_idx
@@ -330,7 +330,7 @@ def plot_update_count_image(
                 [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
         )
 
-    axis.set_xlim(0.5, update_count.shape[1])
+    axis.set_xlim(-0.5, update_count.shape[1])
     axis.set_ylim(-0.5, update_count.shape[0])
 
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
@@ -392,7 +392,7 @@ def plot_q_table_image(
                 [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
         )
 
-    axis.set_xlim(0.5, best_actions.shape[1])
+    axis.set_xlim(-0.5, best_actions.shape[1])
     axis.set_ylim(-0.5, best_actions.shape[0])
 
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
@@ -441,7 +441,7 @@ def plot_q_table_action_image(
                 [format(i, f'0{len_binary_yticklabels}b') for i in yticks]
         )
 
-    axis.set_xlim(0.5, diff_actions.shape[1])
+    axis.set_xlim(-0.5, diff_actions.shape[1])
     axis.set_ylim(-0.5, diff_actions.shape[0])
 
     axis.grid(which="minor", color="w", linestyle="-", linewidth=2)
