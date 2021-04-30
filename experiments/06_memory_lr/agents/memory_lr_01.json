@@ -1,0 +1,38 @@
+{
+    "name" : "memory_lr_01",
+    "type" : "QLearningAgent",
+
+    "deadline" : 25,
+
+    "learning rate" : 0.01,
+    "discount factor" : 1,
+
+    "state space" : {
+        "type": "time memory",
+        "history": 3
+    },
+    "exploration" : {
+        "type" : "epsilon greedy",
+        "epsilon start" : 1,
+        "epsilon decay" : 4.61e-3
+    },
+    "possible actions" : [
+        "step",
+        "best"
+    ],
+    "training environment" : {
+        "episodes" : 10000,
+        "save interval" : 1000,
+        "nk landscape" : {
+            "N" : 14,
+            "K" : 4
+        },
+        "graph" : {
+            "num nodes" : 30,
+            "type" : "regular",
+            "degree" : 5
+        },
+        "seed" : 349572,
+        "max processes" : 4
+    }
+}
