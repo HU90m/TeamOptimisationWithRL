@@ -290,7 +290,6 @@ class QLearningAgent:
                              " This agent has {num_possible_actions}.")
 
         plt.tight_layout()
-        plt.show()
 
 ###############################################################################
 # Functions

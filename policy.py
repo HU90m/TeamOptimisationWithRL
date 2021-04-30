@@ -41,5 +41,5 @@ if __name__ == '__main__':
 
     if save_location:
         plt.savefig(save_location)
-    else:
-        plt.show()
+
+    plt.show()
