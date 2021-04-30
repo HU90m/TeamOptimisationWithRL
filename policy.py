@@ -24,13 +24,22 @@ def get_args():
     else:
         agent.load(suffix="final")
 
-    return agent
+    if len(sys.argv) > 3:
+        save_location = sys.argv[3]
+    else:
+        save_location = None
+
+    return agent, save_location
 
 
 if __name__ == '__main__':
-    agent = get_args()
+    agent, save_location = get_args()
 
     figure = plt.figure(figsize=(8, 10))
 
     agent.plot(figure)
-    plt.show()
+
+    if save_location:
+        plt.savefig(save_location)
+    else:
+        plt.show()
