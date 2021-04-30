@@ -1,0 +1,59 @@
+{
+    "title" : "Effect of Learning Rate on 4 State Binary Memory Agent",
+    "deadline" : 25,
+    "episodes" : 1000,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 4
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.05",
+            "episode" : null,
+            "config file" : "experiments/06_memory/agents/memory_b4_lr05.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.01",
+            "episode" : null,
+            "config file" : "experiments/06_memory/agents/memory_b4_lr01.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.005",
+            "episode" : null,
+            "config file" : "experiments/06_memory/agents/memory_b4_lr005.json",
+            "alpha" : 1
+        },
+        {
+            "type" : "learnt",
+            "name" : "learning rate = 0.001",
+            "episode" : null,
+            "config file" : "experiments/06_memory/agents/memory_b4_lr001.json",
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}

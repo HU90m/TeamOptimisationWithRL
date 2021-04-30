@@ -8,7 +8,7 @@ function kill_children
 trap kill_children SIGINT
 
 
-cd experiments/06_memory_lr
+cd experiments/06_memory
 
 for config in agents/*.json
 do

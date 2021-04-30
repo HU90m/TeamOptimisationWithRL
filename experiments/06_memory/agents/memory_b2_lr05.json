@@ -1,15 +1,15 @@
 {
-    "name" : "memory_lr_01",
+    "name" : "memory_b2_lr05",
     "type" : "QLearningAgent",
 
     "deadline" : 25,
 
-    "learning rate" : 0.01,
+    "learning rate" : 0.05,
     "discount factor" : 1,
 
     "state space" : {
         "type": "time memory",
-        "history": 3
+        "history": 2
     },
     "exploration" : {
         "type" : "epsilon greedy",

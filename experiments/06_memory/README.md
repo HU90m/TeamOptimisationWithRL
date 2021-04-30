@@ -1,4 +1,4 @@
-# Experiment 06: Effect of learning rate on agent with binary memory
+# Experiment 06: Effect of learning rate and memory size on agent with binary memory
 
 - learning rates of 0.05, 0.01, 0.005, 0.001
 
@@ -6,7 +6,7 @@
 - deadline of 25
 - state space
     * time step
-    * binary memory with history of 3 time steps
+    * binary memory with histories of 2, 3 and 4 time steps
 - regular graph
     * 30 nodes
     * 5 degrees per node
