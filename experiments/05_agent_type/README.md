@@ -1,4 +1,4 @@
-# Experiment 04: Agent Type
+# Experiment 05: Agent Type
 Compares policy gradient agents to Q-learning agents.
 
 
