@@ -1,5 +1,4 @@
-# Experiment 04: Agent Type
-Compares policy gradient agents to Q-learning agents.
+# Experiment 06: Effect of learning rate on agent with binary memory
 
 - learning rates of 0.05, 0.01, 0.005, 0.001
 
