@@ -87,7 +87,7 @@ if __name__ == '__main__':
                     strategy_cfg["config file"],
                     get_action_num,
             )
-            assert(agent_config["deadline"] == config["deadline"])
+            assert agent_config["deadline"] == config["deadline"]
             if strategy_type == "learnt":
                 if strategy_cfg["episode"]:
                     agent.load(suffix=strategy_cfg["episode"])
