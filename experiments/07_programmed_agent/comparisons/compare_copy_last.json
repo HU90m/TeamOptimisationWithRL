@@ -1,0 +1,38 @@
+{
+    "title" : "Programmed Agent",
+    "deadline" : 30,
+    "episodes" : 500,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 4
+    },
+    "graph" : {
+        "num_nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "best imitation then step",
+            "action" : "best_then_step",
+            "alpha" : 1
+        },
+        {
+            "type" : "variable",
+            "name" : "best for last 8 steps",
+            "config file" : "experiments/07_programmed_agent/prog_agents/copy_last.json",
+            "load" : null,
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}

@@ -82,13 +82,15 @@ if __name__ == '__main__':
                 "type" : strategy_cfg["type"],
                 "alpha" : strategy_cfg["alpha"],
             }
-        elif strategy_type == "learnt":
+        elif strategy_type in ("learnt", "variable"):
             agent, _ = agents.from_config(strategy_cfg["config file"],
                                           get_action_num)
-            if strategy_cfg["episode"]:
-                agent.load(suffix=strategy_cfg["episode"])
-            else:
-                agent.load(suffix="final")
+
+            if strategy_type == "learnt":
+                if strategy_cfg["episode"]:
+                    agent.load(suffix=strategy_cfg["episode"])
+                else:
+                    agent.load(suffix="final")
 
             # add strategy to strategies dictionary
             strategies[strategy_cfg["name"]] = {
@@ -128,7 +130,7 @@ if __name__ == '__main__':
                 environment.set_all_actions(strategy_cfg["action num"])
                 environment.run_episode()
 
-            elif strategy_cfg["type"] == "learnt":
+            elif strategy_cfg["type"] in ("learnt", "variable"):
                 for time in range(config["deadline"]):
                     for node in range(config["graph"]["num_nodes"]):
                         action = strategy_cfg["agent"].best_action(

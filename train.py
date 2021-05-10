@@ -26,6 +26,9 @@ if __name__ == '__main__':
     # load agent
     agent, config = agents.from_config(config_file, get_action_num)
 
+    if config["type"] not in ("QLearningAgent", "PolicyGradientAgent"):
+        raise TypeError("'" + config["type"] + "' cannot be trained.")
+
     train_env_config = config["training environment"]
 
     # seed random number generator
