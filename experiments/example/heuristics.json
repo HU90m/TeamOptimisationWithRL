@@ -8,7 +8,7 @@
         "K" : 6
     },
     "graph" : {
-        "num_nodes" : 40,
+        "num nodes" : 40,
         "type" : "regular",
         "degree" : 6
     },

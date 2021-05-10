@@ -12,7 +12,7 @@ the agent will fall back on a default action.
 
 ### copy\_last
 
-This agent steps untill the last eight steps then performs best imitation.
+This agent steps until the last eight steps then performs best imitation.
 
 ## Experiment Settings
 

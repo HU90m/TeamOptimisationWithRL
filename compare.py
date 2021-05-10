@@ -56,12 +56,12 @@ if __name__ == '__main__':
     # generate graph
     graph_type = config["graph"]["type"]
     if graph_type == "regular":
-        num_nodes = config["graph"]["num_nodes"]
+        num_nodes = config["graph"]["num nodes"]
         degree = config["graph"]["degree"]
         graph = nx.circulant_graph(num_nodes, range(degree//2 +1))
 
     elif graph_type == "full":
-        graph = nx.complete_graph(config["graph"]["num_nodes"])
+        graph = nx.complete_graph(config["graph"]["num nodes"])
 
     else:
         raise ValueError(f"Graph type '{graph_type}' is not supported")
@@ -83,14 +83,25 @@ if __name__ == '__main__':
                 "alpha" : strategy_cfg["alpha"],
             }
         elif strategy_type in ("learnt", "variable"):
-            agent, _ = agents.from_config(strategy_cfg["config file"],
-                                          get_action_num)
-
+            agent, agent_config = agents.from_config(
+                    strategy_cfg["config file"],
+                    get_action_num,
+            )
+            assert(agent_config["deadline"] == config["deadline"])
             if strategy_type == "learnt":
                 if strategy_cfg["episode"]:
                     agent.load(suffix=strategy_cfg["episode"])
                 else:
                     agent.load(suffix="final")
+
+                agent_env_config = agent_config["training environment"]
+                if agent_env_config["graph"] != config["graph"]:
+                    print("Warning: '" + strategy_cfg["name"] + \
+                          "' was trained on a different graph configuration.")
+                if agent_env_config["nk landscape"] != config["nk landscape"]:
+                    print("Warning: '" + strategy_cfg["name"] + \
+                          "' was trained on a different",
+                          "nk landscape configuration.")
 
             # add strategy to strategies dictionary
             strategies[strategy_cfg["name"]] = {
@@ -132,7 +143,7 @@ if __name__ == '__main__':
 
             elif strategy_cfg["type"] in ("learnt", "variable"):
                 for time in range(config["deadline"]):
-                    for node in range(config["graph"]["num_nodes"]):
+                    for node in range(config["graph"]["num nodes"]):
                         action = strategy_cfg["agent"].best_action(
                                 node,
                                 time,
