@@ -41,7 +41,19 @@
     \item tested over 1,000 episodes
 \end{itemize}
 
-\subsection*{Figures}
+\subsection*{First Batch}
+
+The first batch of runs are illustrated in Figures \ref{comp},
+\ref{policy_b2},
+\ref{policy_b3},
+and
+\ref{policy_b4}.
+From these runs,
+a rough pattern is visible:
+an increase in the average of the average node score
+with an increase in learning rate.
+The size of memory doesn't appear correlate with the performance of agents.
+
 
 \begin{figure}[ht]
     \centering
@@ -179,5 +191,56 @@
     \label{policy_b4}
 \end{figure}
 
+\subsection*{Second Batch}
+The second batch of runs are illustrated in Figures \ref{comp_2}
+and \ref{policy_2_b2}.
+They explore a higher learning rate for a memory size of 2 bits.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=26em]{../figures/comparison_b2_2.pdf}
+    \caption{
+        The Average and 95\% confidence of the Average Node Score
+        at each time step.
+    }
+    \label{comp_2}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=12em]{../figures/policy_b2_lr09.pdf}
+        \caption{Learning Rate of 0.09}
+        \label{2_b2_lr09}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=12em]{../figures/policy_b2_lr07.pdf}
+        \caption{Learning Rate of 0.07}
+        \label{2_b2_lr07}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=12em]{../figures/policy_b2_lr05.pdf}
+        \caption{Learning Rate of 0.05}
+        \label{2_b2_lr05}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.24\textwidth}
+        \centering
+        \includegraphics[width=12em]{../figures/policy_b2_lr03.pdf}
+        \caption{Learning Rate of 0.03}
+        \label{2_b2_lr03}
+    \end{subfigure}
+    \caption{
+        The policy, experiance, and relative value of the action `step'
+        over best for a binary agents with a memory size of two bits
+        and varying learning rates. The most recent timestep
+        is the least significant bit of the memory.
+        The action `best' is represented by a `1' and `step' by a `0'.
+    }
+    \label{policy_2_b2}
+\end{figure}
 
 \end{document}
