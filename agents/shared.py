@@ -4,6 +4,7 @@ from os import path
 from agents.qlearning import QLearningAgent
 from agents.policygrad import PolicyGradientAgent
 from agents.programmed import ProgrammedAgent
+from agents.randomtable import RandomTableAgent
 
 def from_config(config_location, get_action_num_func):
     """Loads any agent from a config file."""
@@ -20,6 +21,8 @@ def from_config(config_location, get_action_num_func):
         agent = PolicyGradientAgent(config, config_dir, get_action_num_func)
     elif agent_type == "ProgrammedAgent":
         agent = ProgrammedAgent(config, config_dir, get_action_num_func)
+    elif agent_type == "RandomTableAgent":
+        agent = RandomTableAgent(config, config_dir, get_action_num_func)
     else:
         raise ValueError(f"{agent_type} is not a supported agent.")
 

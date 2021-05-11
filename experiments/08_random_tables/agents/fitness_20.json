@@ -1,0 +1,16 @@
+{
+    "name" : "fitness_20",
+    "type" : "RandomTableAgent",
+
+    "deadline" : 30,
+    "table seed": 3451,
+
+    "state space" : {
+        "type" : "time fitness",
+        "quantisation levels" : 20
+    },
+    "possible actions" : [
+        "step",
+        "best"
+    ]
+}

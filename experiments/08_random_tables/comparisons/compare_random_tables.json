@@ -1,0 +1,65 @@
+{
+    "title" : "RandomTableAgent",
+    "deadline" : 30,
+    "episodes" : 500,
+    "95confidence": true,
+    "nk landscape" : {
+        "N" : 14,
+        "K" : 4
+    },
+    "graph" : {
+        "num nodes" : 30,
+        "type" : "regular",
+        "degree" : 5
+    },
+    "strategies" : [
+        {
+            "type" : "constant",
+            "name" : "step then best imitation",
+            "action" : "step_then_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "50% step chance",
+            "action" : "50_step_50_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "constant",
+            "name" : "80% step chance",
+            "action" : "80_step_20_best",
+            "alpha" : 1
+        },
+        {
+            "type" : "variable",
+            "name" : "best for last 8 steps",
+            "config file" : "experiments/08_random_tables/agents/copy_last.json",
+            "load" : null,
+            "alpha" : 1
+        },
+        {
+            "type" : "variable",
+            "name" : "random table (memory 2)",
+            "config file" : "experiments/08_random_tables/agents/memory_2.json",
+            "load" : null,
+            "alpha" : 1
+        },
+        {
+            "type" : "variable",
+            "name" : "random table (memory 3)",
+            "config file" : "experiments/08_random_tables/agents/memory_3.json",
+            "load" : null,
+            "alpha" : 1
+        },
+        {
+            "type" : "variable",
+            "name" : "random table (fitness 20)",
+            "config file" : "experiments/08_random_tables/agents/fitness_20.json",
+            "load" : null,
+            "alpha" : 1
+        }
+    ],
+    "seed" : 24,
+    "max processes" : 4
+}

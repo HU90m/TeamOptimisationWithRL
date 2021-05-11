@@ -1,0 +1,16 @@
+{
+    "name" : "memory_3",
+    "type" : "RandomTableAgent",
+
+    "deadline" : 30,
+    "table seed": 4164854,
+
+    "state space" : {
+        "type": "time memory",
+        "history": 3
+    },
+    "possible actions" : [
+        "step",
+        "best"
+    ]
+}
