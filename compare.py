@@ -87,7 +87,9 @@ if __name__ == '__main__':
                     strategy_cfg["config file"],
                     get_action_num,
             )
-            assert agent_config["deadline"] == config["deadline"]
+            if agent_config["deadline"] != config["deadline"]:
+                print("Warning: '" + strategy_cfg["name"] + \
+                      "' has been set up for a different deadline.")
             if strategy_type == "learnt":
                 if strategy_cfg["episode"]:
                     agent.load(suffix=strategy_cfg["episode"])
