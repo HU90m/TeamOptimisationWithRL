@@ -23,9 +23,10 @@ ACTION_STR = [
         'best_then_step',
         'step_then_best',
         'modal_then_step',
-        'step_40_best',
-        'step_60_best',
-        'step_80_best',
+        '40_step_60_best',
+        '50_step_50_best',
+        '60_step_40_best',
+        '80_step_20_best',
 ]
 # action name -> action index
 ACTION_NUM = {}
@@ -224,7 +225,7 @@ def action_modal_then_step(env, node, time):
 ACTION_FUNC[ACTION_NUM["modal_then_step"]] = action_modal_then_step
 
 
-def action_step_40_best(env, node, time):
+def action_40_step_60_best(env, node, time):
     """
     40% chance of stepping, 60% chance of best imitation
     """
@@ -234,10 +235,23 @@ def action_step_40_best(env, node, time):
         outcome, next_position, success = action_best(env, node, time)
     return outcome, next_position, success
 
-ACTION_FUNC[ACTION_NUM["step_40_best"]] = action_step_40_best
+ACTION_FUNC[ACTION_NUM["40_step_60_best"]] = action_40_step_60_best
 
 
-def action_step_60_best(env, node, time):
+def action_50_step_50_best(env, node, time):
+    """
+    50% chance of stepping, 50% chance of best imitation
+    """
+    if random.rand() < 0.5:
+        outcome, next_position, success = action_step(env, node, time)
+    else:
+        outcome, next_position, success = action_best(env, node, time)
+    return outcome, next_position, success
+
+ACTION_FUNC[ACTION_NUM["50_step_50_best"]] = action_50_step_50_best
+
+
+def action_60_step_40_best(env, node, time):
     """
     60% chance of stepping, 40% chance of best imitation
     """
@@ -247,10 +261,10 @@ def action_step_60_best(env, node, time):
         outcome, next_position, success = action_best(env, node, time)
     return outcome, next_position, success
 
-ACTION_FUNC[ACTION_NUM["step_60_best"]] = action_step_60_best
+ACTION_FUNC[ACTION_NUM["60_step_40_best"]] = action_60_step_40_best
 
 
-def action_step_80_best(env, node, time):
+def action_80_step_20_best(env, node, time):
     """
     80% chance of stepping, 20% chance of best imitation
     """
@@ -260,4 +274,4 @@ def action_step_80_best(env, node, time):
         outcome, next_position, success = action_best(env, node, time)
     return outcome, next_position, success
 
-ACTION_FUNC[ACTION_NUM["step_80_best"]] = action_step_80_best
+ACTION_FUNC[ACTION_NUM["80_step_20_best"]] = action_80_step_20_best
