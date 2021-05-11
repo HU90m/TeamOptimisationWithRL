@@ -66,11 +66,6 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"Graph type '{graph_type}' is not supported")
 
-    DRAW_GRAPH = False
-    if DRAW_GRAPH:
-        nx.draw_circular(graph, node_size=10, width=0.5)
-        plt.show()
-
     # load strategies
     strategies = {}
     for strategy_cfg in config["strategies"]:
